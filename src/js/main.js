@@ -11,6 +11,9 @@ const Game = {
   init() {
     Sound.init();
     Sound.loadSetting();
+    if (typeof KeyboardShortcuts !== 'undefined') {
+      KeyboardShortcuts.init();
+    }
     this.loadPrefs();
     this.bindEvents();
     this.updateContinueButton();
