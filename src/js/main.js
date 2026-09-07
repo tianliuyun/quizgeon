@@ -1,11 +1,12 @@
 // 主入口 — UI 控制器 + 游戏状态机
 const Game = {
-  state: 'menu',  // menu / playing / gameover / codex / stats
+  state: 'menu',
   player: null,
   dungeon: [],
   roomIndex: 0,
-  mode: 'standard',  // standard / learning
+  mode: 'standard',
   difficulty: 'normal',
+  selectedClass: 'warrior',
 
   init() {
     Sound.init();
@@ -32,6 +33,9 @@ const Game = {
       btn.classList.toggle('active', btn.dataset.mode === mode);
     });
 
+    const cls = localStorage.getItem('quizgeon_class') || 'warrior';
+    this.selectClass(cls);
+
     const sound = localStorage.getItem(CONFIG.save.soundKey);
     document.getElementById('btn-sound').textContent = sound === '0' ? '🔇' : '🔊';
   },
@@ -48,6 +52,14 @@ const Game = {
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.setMode(btn.dataset.mode);
+      });
+    });
+
+    // 职业选择
+    document.querySelectorAll('.class-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const classId = btn.dataset.class;
+        this.selectClass(classId);
       });
     });
 
@@ -88,6 +100,23 @@ const Game = {
     localStorage.setItem(CONFIG.save.modeKey, mode);
   },
 
+  selectClass(classId) {
+    if (typeof Classes === 'undefined') return;
+    this.selectedClass = classId;
+
+    document.querySelectorAll('.class-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.class === classId);
+    });
+
+    const cls = Classes.get(classId);
+    const descEl = document.getElementById('class-desc');
+    if (descEl && cls) {
+      descEl.innerHTML = `<strong>${cls.emoji} ${cls.name}</strong>：${cls.desc}`;
+    }
+
+    localStorage.setItem('quizgeon_class', classId);
+  },
+
   showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -118,6 +147,11 @@ const Game = {
     this.roomIndex = 0;
     SaveSystem.clearCurrent();
     SaveSystem.incrementRuns();
+
+    // 应用职业加成
+    if (typeof Classes !== 'undefined') {
+      Classes.apply(this.player, this.selectedClass);
+    }
 
     const wrongPool = SaveSystem.getWrongPool();
     this.dungeon = Dungeon.generateFloor(1, wrongPool);
@@ -307,6 +341,15 @@ const Game = {
 
     if (isCorrect) {
       let gold = Combat.calcGold(question, this.player);
+      // 职业金币加成
+      if (typeof Classes !== 'undefined') {
+        gold = Math.floor(gold * Classes.getBonus(this.player, 'goldMult'));
+        // 盗贼连击加成
+        const streakBonus = Classes.getBonus(this.player, 'streakBonus');
+        if (streakBonus > 0) {
+          gold = Math.floor(gold * (1 + this.player.streak * streakBonus));
+        }
+      }
       Player.addGold(this.player, gold);
       Player.onCorrect(this.player);
       Sound.correct();
@@ -319,9 +362,14 @@ const Game = {
       }
     } else {
       let damage = Combat.calcDamage(question);
-      // 伤害减免遗物
+      // 伤害减免（遗物）
       if (typeof Relics !== 'undefined') {
         damage = Math.floor(damage * Relics.getDamageMultiplier(this.player));
+      }
+      // 职业伤害减免
+      if (typeof Classes !== 'undefined') {
+        const dmgReduce = Classes.getBonus(this.player, 'damageReduce');
+        if (dmgReduce > 0) damage = Math.floor(damage * (1 - dmgReduce));
       }
       const dead = Player.takeDamage(this.player, damage);
       // 凤凰羽毛复活

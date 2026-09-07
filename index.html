@@ -17,6 +17,32 @@
       <div class="menu">
         <button id="btn-continue" class="btn-primary" style="display:none;">⏩ 继续游戏</button>
         <button id="btn-start" class="btn-primary">⚔️ 新游戏</button>
+
+        <div class="class-selector">
+          <div class="selector-label">🎭 选择职业</div>
+          <div class="class-options">
+            <button class="class-btn active" data-class="warrior">
+              <div class="class-emoji">⚔️</div>
+              <div class="class-name">战士</div>
+            </button>
+            <button class="class-btn" data-class="mage">
+              <div class="class-emoji">🔮</div>
+              <div class="class-name">法师</div>
+            </button>
+            <button class="class-btn" data-class="rogue">
+              <div class="class-emoji">🗡️</div>
+              <div class="class-name">盗贼</div>
+            </button>
+            <button class="class-btn" data-class="scholar">
+              <div class="class-emoji">📚</div>
+              <div class="class-name">学者</div>
+            </button>
+          </div>
+          <div class="class-desc" id="class-desc">
+            <strong>⚔️ 战士</strong>：高血量，伤害减免，适合新手
+          </div>
+        </div>
+
         <div class="mode-selector">
           <div class="mode-label">🎮 模式选择</div>
           <div class="mode-options">
@@ -124,6 +150,7 @@
   <script src="src/js/game/combat.js"></script>
   <script src="src/js/game/shop.js"></script>
   <script src="src/js/game/relics.js"></script>
+  <script src="src/js/game/classes.js"></script>
   <script src="src/js/game/sound.js"></script>
   <script src="src/js/main.js"></script>
 </body>
