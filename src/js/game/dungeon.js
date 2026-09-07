@@ -1,20 +1,30 @@
 // 地牢生成系统
 const Dungeon = {
   // 生成一层地牢
-  generateFloor(floorNum, wrongPool = {}) {
+  generateFloor(floorNum, wrongPool = {}, difficulty = 'normal') {
+    return this._generateFloor(floorNum, wrongPool, difficulty, Math.random);
+  },
+
+  // 种子版地牢（用于每日挑战）
+  generateFloorSeeded(floorNum, wrongPool = {}, difficulty = 'normal', seed = 0) {
+    let s = seed;
+    const rand = function() {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+    return this._generateFloor(floorNum, wrongPool, difficulty, rand);
+  },
+
+  _generateFloor(floorNum, wrongPool, difficulty, randFn) {
     const floorQuestions = this.getFloorQuestions(floorNum);
     if (floorQuestions.length === 0) {
       floorQuestions = this.getAllQuestions();
     }
 
-    const save = SaveSystem.load();
-    const wrongReduceLvl = save.permanent.upgrades.wrongReduce || 0;
-    const wrongReduce = wrongReduceLvl * (CONFIG.upgrades.wrongReduce.perLevel || 0.15);
-
+    const wrongReduce = SaveSystem.getUpgradeLevel('wrongReduce');
     const rooms = [];
     const usedIds = new Set();
     const bossQuestions = floorQuestions.filter(q => q.type === 'open');
-    const normalQs = floorQuestions.filter(q => q.type !== 'open');
 
     for (let i = 0; i < CONFIG.player.roomsPerFloor; i++) {
       // 商店房
@@ -28,11 +38,10 @@ const Dungeon = {
         continue;
       }
 
-      // 宝箱房（第 2 间房之后随机出现，每层 1 个）
-      if (i === 6 && Math.random() < 0.6) {
-        const relic = Relics ? Relics.getRandomRelic(
-          (rooms.filter(r => r.type === 'relic').map(r => r.relic.id))
-        ) : null;
+      // 宝箱房（第 7 间，60% 概率）
+      if (i === 6 && randFn() < 0.6 && typeof Relics !== 'undefined') {
+        const ownedIds = rooms.filter(r => r.type === 'relic').map(r => r.relic.id);
+        const relic = Relics.getRandomRelic(ownedIds);
         if (relic) {
           rooms.push({
             type: 'relic',
@@ -44,21 +53,31 @@ const Dungeon = {
         }
       }
 
-      // Boss 房
+      // Boss 房（最后一间）
       if (i === CONFIG.player.bossRoomIndex && bossQuestions.length > 0) {
-        const bossQ = bossQuestions[Math.floor(Math.random() * bossQuestions.length)];
-        usedIds.add(bossQ.id);
+        const boss = bossQuestions[Math.floor(randFn() * bossQuestions.length)];
+        usedIds.add(boss.id);
         rooms.push({
           type: 'boss',
-          question: bossQ,
+          question: boss,
           monster: this.generateBossMonster(floorNum)
         });
         continue;
       }
 
-      // 普通战斗房
-      const q = this.pickQuestion(normalQs, wrongPool, usedIds, wrongReduce);
-      if (q) {
+      // 普通怪物房
+      const q = this.pickQuestion(floorQuestions, wrongPool, usedIds, wrongReduce, randFn);
+      if (!q) {
+        // 没题了，找个用过的重复
+        const fallback = floorQuestions.filter(qq => qq.type !== 'open');
+        if (fallback.length === 0) continue;
+        const q2 = fallback[Math.floor(randFn() * fallback.length)];
+        rooms.push({
+          type: 'normal',
+          question: q2,
+          monster: this.generateMonster(q2, i)
+        });
+      } else {
         usedIds.add(q.id);
         rooms.push({
           type: 'normal',
@@ -68,25 +87,75 @@ const Dungeon = {
       }
     }
 
-    // 题不够时，重复用题（打乱顺序）
-    if (rooms.length < CONFIG.player.roomsPerFloor) {
-      const remaining = normalQs.filter(q => !usedIds.has(q.id));
-      const pool = Utils.shuffle([...remaining, ...normalQs]);
-      let idx = 0;
-      while (rooms.length < CONFIG.player.roomsPerFloor && idx < pool.length) {
-        const q = pool[idx++];
-        const roomIdx = rooms.length;
-        if (roomIdx === CONFIG.player.shopRoomIndex ||
-            roomIdx === CONFIG.player.bossRoomIndex) continue;
-        rooms.push({
-          type: 'normal',
-          question: q,
-          monster: this.generateMonster(q, roomIdx)
-        });
-      }
-    }
-
     return rooms;
+  },
+
+  // 加权选题：错题权重更高
+  pickQuestion(pool, wrongPool, usedIds, wrongReduceLevel, randFn) {
+    const candidates = pool.filter(q =>
+      q.type !== 'open' && !usedIds.has(q.id)
+    );
+    if (candidates.length === 0) return null;
+
+    const weights = candidates.map(q => {
+      const wrongCount = wrongPool[q.id] || 0;
+      const baseWeight = 1;
+      const wrongWeight = wrongCount * CONFIG.combat.wrongWeightMult * (1 - wrongReduceLevel * 0.15);
+      return baseWeight + Math.max(0, wrongWeight);
+    });
+
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let random = randFn() * totalWeight;
+
+    for (let i = 0; i < candidates.length; i++) {
+      random -= weights[i];
+      if (random <= 0) return candidates[i];
+    }
+    return candidates[candidates.length - 1];
+  },
+
+  // 生成普通怪物
+  generateMonster(question, roomIndex) {
+    const difficulty = question.difficulty || 'easy';
+    const types = {
+      easy: [
+        { emoji: '👾', name: '小怪' },
+        { emoji: '🦇', name: '蝙蝠' },
+        { emoji: '🐀', name: '巨鼠' },
+        { emoji: '🕷️', name: '蜘蛛' }
+      ],
+      medium: [
+        { emoji: '👹', name: '恶魔兵' },
+        { emoji: '🧟', name: '尸巫' },
+        { emoji: '🐉', name: '幼龙' },
+        { emoji: '👻', name: '怨灵' }
+      ],
+      hard: [
+        { emoji: '🧙', name: '黑法师' },
+        { emoji: '💀', name: '骷髅王' },
+        { emoji: '🐙', name: '维度章鱼' }
+      ]
+    };
+    const pool = types[difficulty] || types.easy;
+    const base = pool[Math.floor(Math.random() * pool.length)];
+    return {
+      emoji: base.emoji,
+      name: `${base.name} Lv.${roomIndex + 1}`,
+      type: difficulty
+    };
+  },
+
+  // 生成 Boss
+  generateBossMonster(floorNum) {
+    const bosses = [
+      { emoji: '🐉', name: '遗忘之龙', type: 'BOSS' },
+      { emoji: '👹', name: '梯度魔王', type: 'BOSS' },
+      { emoji: '🧙', name: '过拟合法师', type: 'BOSS' },
+      { emoji: '🐙', name: '维度章鱼', type: 'BOSS' },
+      { emoji: '💀', name: '梯度死亡', type: 'BOSS' }
+    ];
+    const boss = bosses[(floorNum - 1) % bosses.length];
+    return { ...boss, floor: floorNum };
   },
 
   // 获取某层的题目
@@ -104,73 +173,24 @@ const Dungeon = {
     return window.QUESTION_BANK.filter(q => Utils.validateQuestion(q).valid);
   },
 
-  // 加权选题：错题权重更高
-  pickQuestion(pool, wrongPool, usedIds, wrongReduce = 0) {
-    const available = pool.filter(q => !usedIds.has(q.id));
-    if (available.length === 0) return null;
-
-    const weights = available.map(q => {
-      let w = 1;
-      if (wrongPool[q.id]) {
-        w = 3 * (1 - wrongReduce);
-      }
-      return w;
-    });
-
-    return Utils.weightedPick(available, weights);
+  // 获取总层数
+  getTotalFloors() {
+    const all = this.getAllQuestions();
+    const floors = new Set(all.map(q => q.floor));
+    return floors.size;
   },
 
-  // 生成普通怪物
-  generateMonster(question, roomIndex) {
-    const difficulty = question.difficulty || 'easy';
-    const types = {
-      easy: [
-        { emoji: '👾', name: '数据小怪', type: '普通' },
-        { emoji: '🦠', name: '病毒史莱姆', type: '普通' },
-        { emoji: '🐛', name: 'Bug 幼虫', type: '普通' },
-        { emoji: '🪲', name: '甲虫', type: '普通' }
-      ],
-      medium: [
-        { emoji: '👻', name: '梯度幽灵', type: '精英' },
-        { emoji: '🐉', name: '过拟合龙', type: '精英' },
-        { emoji: '🧟', name: '梯度消失僵尸', type: '精英' },
-        { emoji: '🦇', name: '反向传播蝠', type: '精英' }
-      ],
-      hard: [
-        { emoji: '🐙', name: '维度章鱼', type: '精英' },
-        { emoji: '💀', name: '局部最优骷髅', type: '精英' },
-        { emoji: '🔥', name: '梯度爆炸魔', type: '精英' }
-      ]
-    };
-
-    const list = types[difficulty] || types.easy;
-    return { ...list[Math.floor(Math.random() * list.length)] };
-  },
-
-  // 生成 Boss 怪物
-  generateBossMonster(floorNum) {
-    const bosses = [
-      { emoji: '🐙', name: '维度章鱼', type: 'BOSS', hp: 2 },
-      { emoji: '💀', name: '局部最优骷髅王', type: 'BOSS', hp: 2 },
-      { emoji: '🐲', name: '过拟合巨龙', type: 'BOSS', hp: 2 },
-      { emoji: '🦑', name: '梯度巨妖', type: 'BOSS', hp: 2 },
-      { emoji: '👹', name: '损失函数魔王', type: 'BOSS', hp: 2 },
-      { emoji: '🧙', name: '黑暗调参师', type: 'BOSS', hp: 2 }
-    ];
-    const idx = (floorNum - 1) % bosses.length;
-    return { ...bosses[idx] };
+  // Fisher-Yates 洗牌
+  shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   },
 
   // 生成商店物品
   generateShopItems() {
-    if (typeof Shop === 'undefined' || !Shop.generateShopItems) return [];
     return Shop.generateShopItems();
-  },
-
-  // 获取总层数
-  getTotalFloors() {
-    const all = window.QUESTION_BANK || [];
-    const floors = new Set(all.map(q => q.floor));
-    return Math.max(...floors, 1);
   }
 };

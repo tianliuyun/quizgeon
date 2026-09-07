@@ -36,6 +36,9 @@ const Game = {
     const cls = localStorage.getItem('quizgeon_class') || 'warrior';
     this.selectClass(cls);
 
+    const diff = localStorage.getItem('quizgeon_difficulty') || 'normal';
+    this.selectDifficulty(diff);
+
     const sound = localStorage.getItem(CONFIG.save.soundKey);
     document.getElementById('btn-sound').textContent = sound === '0' ? '🔇' : '🔊';
   },
@@ -62,6 +65,20 @@ const Game = {
         this.selectClass(classId);
       });
     });
+
+    // 难度选择
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const diff = btn.dataset.diff;
+        this.selectDifficulty(diff);
+      });
+    });
+
+    // 每日挑战
+    const btnDaily = document.getElementById('btn-daily');
+    if (btnDaily) {
+      btnDaily.addEventListener('click', () => this.startDailyChallenge());
+    }
 
     // 音效开关
     document.getElementById('btn-sound').addEventListener('click', () => {
@@ -117,6 +134,14 @@ const Game = {
     localStorage.setItem('quizgeon_class', classId);
   },
 
+  selectDifficulty(diff) {
+    this.difficulty = diff;
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.diff === diff);
+    });
+    localStorage.setItem('quizgeon_difficulty', diff);
+  },
+
   showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -143,6 +168,7 @@ const Game = {
       return;
     }
 
+    this.isDailyChallenge = false;
     this.player = Player.create(1);
     this.roomIndex = 0;
     SaveSystem.clearCurrent();
@@ -154,10 +180,55 @@ const Game = {
     }
 
     const wrongPool = SaveSystem.getWrongPool();
-    this.dungeon = Dungeon.generateFloor(1, wrongPool);
+    this.dungeon = Dungeon.generateFloor(1, wrongPool, this.difficulty);
 
     if (this.dungeon.length === 0) {
       alert('地牢生成失败，没有可用的题目。');
+      return;
+    }
+
+    this.state = 'playing';
+    this.showScreen('game-screen');
+    this.autoSave();
+    this.enterRoom();
+  },
+
+  // 每日挑战
+  startDailyChallenge() {
+    if (typeof DailyChallenge === 'undefined') {
+      this.startRun();
+      return;
+    }
+
+    const today = DailyChallenge.getToday();
+    const best = DailyChallenge.getTodayBest();
+
+    let msg = `📅 今日挑战（${today}）\n\n和所有玩家玩同一个地牢，刷新最高记录！\n`;
+    if (best) {
+      msg += `\n今日最佳：第 ${best.floor} 层 · ${best.correct} 题对 · ${best.score} 分`;
+    }
+    msg += '\n\n开始挑战？';
+
+    if (!confirm(msg)) return;
+
+    this.isDailyChallenge = true;
+    this.player = Player.create(1);
+    this.player.floor = 1;
+    this.roomIndex = 0;
+    SaveSystem.clearCurrent();
+    SaveSystem.incrementRuns();
+
+    // 每日挑战默认普通难度，学者职业禁用额外加成
+    if (typeof Classes !== 'undefined') {
+      Classes.apply(this.player, this.selectedClass);
+    }
+
+    // 用日期种子生成地牢
+    const seed = DailyChallenge.getTodaySeed();
+    this.dungeon = Dungeon.generateFloorSeeded(1, {}, 'normal', seed);
+
+    if (this.dungeon.length === 0) {
+      alert('每日挑战生成失败。');
       return;
     }
 
@@ -377,6 +448,9 @@ const Game = {
 
     if (isCorrect) {
       let gold = Combat.calcGold(question, this.player);
+      // 难度金币加成
+      const diffConfig = CONFIG.difficulty[this.difficulty];
+      if (diffConfig) gold = Math.floor(gold * diffConfig.goldMult);
       // 职业金币加成
       if (typeof Classes !== 'undefined') {
         gold = Math.floor(gold * Classes.getBonus(this.player, 'goldMult'));
@@ -407,6 +481,9 @@ const Game = {
         const dmgReduce = Classes.getBonus(this.player, 'damageReduce');
         if (dmgReduce > 0) damage = Math.floor(damage * (1 - dmgReduce));
       }
+      // 难度倍率（困难伤害更高）
+      const diffConfig = CONFIG.difficulty[this.difficulty];
+      if (diffConfig) damage = Math.floor(damage / diffConfig.hpMult);
       const dead = Player.takeDamage(this.player, damage);
       if (dead && typeof Relics !== 'undefined' && Relics.canRevive(this.player)) {
         Relics.doRevive(this.player);
@@ -776,7 +853,13 @@ const Game = {
     Player.heal(this.player, heal);
 
     const wrongPool = SaveSystem.getWrongPool();
-    this.dungeon = Dungeon.generateFloor(nextFloorNum, wrongPool);
+    if (this.isDailyChallenge && typeof DailyChallenge !== 'undefined') {
+      // 每日挑战：每层用不同的种子
+      const seed = DailyChallenge.getTodaySeed() + nextFloorNum * 7919;
+      this.dungeon = Dungeon.generateFloorSeeded(nextFloorNum, wrongPool, this.difficulty, seed);
+    } else {
+      this.dungeon = Dungeon.generateFloor(nextFloorNum, wrongPool, this.difficulty);
+    }
 
     SaveSystem.updateMaxFloor(this.player.floor - 1);
 
@@ -823,6 +906,22 @@ const Game = {
     SaveSystem.updateMaxFloor(this.player.floor - 1);
     SaveSystem.clearCurrent();
 
+    let dailyMsg = '';
+    if (this.isDailyChallenge && typeof DailyChallenge !== 'undefined') {
+      const isNewRecord = DailyChallenge.recordScore(
+        this.player.floor,
+        this.player.room,
+        this.player.gold,
+        this.player.correctThisRun
+      );
+      const best = DailyChallenge.getTodayBest();
+      if (isNewRecord) {
+        dailyMsg = `<p style="color: var(--accent);">🏆 今日新纪录！得分：${best.score}</p>`;
+      } else if (best) {
+        dailyMsg = `<p>今日最高：<strong>${best.score}</strong> 分</p>`;
+      }
+    }
+
     document.getElementById('gameover-title').textContent =
       `你倒在了第 ${this.player.floor} 层第 ${this.player.room} 间...`;
 
@@ -832,6 +931,7 @@ const Game = {
       <p>最高连胜：<strong>${this.player.bestStreak}</strong> 题</p>
       <p>到达层数：<strong>第 ${this.player.floor} 层</strong></p>
       <p>获得金币：<strong>💰 ${this.player.gold}</strong></p>
+      ${dailyMsg}
     `;
 
     document.getElementById('gameover-rewards').innerHTML = `

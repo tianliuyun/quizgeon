@@ -137,6 +137,54 @@ body {
   color: var(--primary-light);
 }
 
+.difficulty-selector {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.difficulty-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.diff-btn {
+  background: var(--bg-darker);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.diff-btn:hover {
+  border-color: var(--primary-light);
+}
+
+.diff-btn.active {
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--text);
+}
+
+.diff-btn[data-diff="easy"].active {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.diff-btn[data-diff="hard"].active {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
 .mode-options {
   display: flex;
   gap: 8px;

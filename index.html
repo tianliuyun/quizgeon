@@ -17,6 +17,7 @@
       <div class="menu">
         <button id="btn-continue" class="btn-primary" style="display:none;">⏩ 继续游戏</button>
         <button id="btn-start" class="btn-primary">⚔️ 新游戏</button>
+        <button id="btn-daily" class="btn-secondary">📅 每日挑战</button>
 
         <div class="class-selector">
           <div class="selector-label">🎭 选择职业</div>
@@ -48,6 +49,15 @@
           <div class="mode-options">
             <button class="mode-btn active" data-mode="standard">标准模式</button>
             <button class="mode-btn" data-mode="learning">学习模式</button>
+          </div>
+        </div>
+
+        <div class="difficulty-selector">
+          <div class="selector-label">⚔️ 难度选择</div>
+          <div class="difficulty-options">
+            <button class="diff-btn" data-diff="easy">简单</button>
+            <button class="diff-btn active" data-diff="normal">普通</button>
+            <button class="diff-btn" data-diff="hard">困难</button>
           </div>
         </div>
         <button id="btn-codex" class="btn-secondary">📖 知识点图鉴</button>
@@ -151,6 +161,7 @@
   <script src="src/js/game/shop.js"></script>
   <script src="src/js/game/relics.js"></script>
   <script src="src/js/game/classes.js"></script>
+  <script src="src/js/game/daily.js"></script>
   <script src="src/js/game/sound.js"></script>
   <script src="src/js/main.js"></script>
 </body>
