@@ -75,13 +75,17 @@ const Dungeon = {
 
   // 获取某层的题目
   getFloorQuestions(floorNum) {
-    const all = window.QUESTION_BANK || [];
+    const all = this.getAllQuestions();
     return all.filter(q => q.floor === floorNum);
   },
 
   // 获取全部题目
   getAllQuestions() {
-    return window.QUESTION_BANK || [];
+    if (!window.QUESTION_BANK || !Array.isArray(window.QUESTION_BANK)) {
+      console.warn('题库未加载');
+      return [];
+    }
+    return window.QUESTION_BANK.filter(q => Utils.validateQuestion(q).valid);
   },
 
   // 加权选题：错题权重更高

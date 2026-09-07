@@ -15,9 +15,12 @@ const Game = {
     this.updateContinueButton();
     this.showScreen('start-screen');
 
-    // 页面关闭前自动存档
-    window.addEventListener('beforeunload', () => {
-      if (this.state === 'playing') this.autoSave();
+    // 页面关闭前自动存档（errorHandler.js 里有防关闭提示，这里只负责存档）
+    const _this = this;
+    window.addEventListener('beforeunload', function () {
+      if (_this.state === 'playing') {
+        try { _this.autoSave(); } catch (e) { /* ignore */ }
+      }
     });
   },
 
@@ -105,6 +108,12 @@ const Game = {
 
   // 开始新游戏
   startRun() {
+    const totalFloors = Dungeon.getTotalFloors();
+    if (totalFloors === 0) {
+      alert('题库未加载，请检查网络或刷新页面。');
+      return;
+    }
+
     this.player = Player.create(1);
     this.roomIndex = 0;
     SaveSystem.clearCurrent();
@@ -112,6 +121,11 @@ const Game = {
 
     const wrongPool = SaveSystem.getWrongPool();
     this.dungeon = Dungeon.generateFloor(1, wrongPool);
+
+    if (this.dungeon.length === 0) {
+      alert('地牢生成失败，没有可用的题目。');
+      return;
+    }
 
     this.state = 'playing';
     this.showScreen('game-screen');

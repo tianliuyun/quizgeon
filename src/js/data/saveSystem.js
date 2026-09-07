@@ -1,14 +1,43 @@
 // 存档系统 — localStorage 持久化
 const SaveSystem = {
+  // 存储后端（默认 localStorage，不可用时降级到内存）
+  _storage: null,
+
+  // 获取存储后端
+  getStorage() {
+    if (this._storage) return this._storage;
+    try {
+      localStorage.setItem('_qs_test_', '1');
+      localStorage.removeItem('_qs_test_');
+      this._storage = localStorage;
+    } catch (e) {
+      console.warn('localStorage 不可用，使用内存存储（刷新后数据丢失）');
+      this._storage = {
+        _data: {},
+        getItem(k) { return this._data[k] !== undefined ? this._data[k] : null; },
+        setItem(k, v) { this._data[k] = String(v); },
+        removeItem(k) { delete this._data[k]; }
+      };
+    }
+    return this._storage;
+  },
+
   // 读取存档
   load() {
     try {
-      const raw = localStorage.getItem(CONFIG.save.key);
+      const raw = this.getStorage().getItem(CONFIG.save.key);
       if (!raw) return this.defaultSave();
       const data = JSON.parse(raw);
-      return { ...this.defaultSave(), ...data };
+      // 合并默认值，防止旧存档缺字段
+      const def = this.defaultSave();
+      return {
+        ...def,
+        ...data,
+        permanent: { ...def.permanent, ...(data.permanent || {}) },
+        current: data.current || null
+      };
     } catch (e) {
-      console.warn('读取存档失败:', e);
+      console.warn('读取存档失败，使用默认存档:', e.message);
       return this.defaultSave();
     }
   },
@@ -16,10 +45,10 @@ const SaveSystem = {
   // 保存
   save(data) {
     try {
-      localStorage.setItem(CONFIG.save.key, JSON.stringify(data));
+      this.getStorage().setItem(CONFIG.save.key, JSON.stringify(data));
       return true;
     } catch (e) {
-      console.warn('保存失败:', e);
+      console.warn('保存失败:', e.message);
       return false;
     }
   },
