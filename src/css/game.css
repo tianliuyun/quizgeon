@@ -15,6 +15,58 @@
   --monster: #8b5cf6;
 }
 
+/* 亮色主题 */
+body.theme-light {
+  --bg-dark: #f8fafc;
+  --bg-darker: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --accent: #f59e0b;
+  --danger: #ef4444;
+  --success: #10b981;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --monster: #6366f1;
+}
+
+/* 经典像素风主题 */
+body.theme-classic {
+  --bg-dark: #1a1a2e;
+  --bg-darker: #0f0f1a;
+  --bg-card: #16213e;
+  --bg-card-hover: #1f2a4a;
+  --primary: #e94560;
+  --primary-light: #ff6b6b;
+  --accent: #f59e0b;
+  --danger: #ff6b6b;
+  --success: #00d4aa;
+  --text: #e0e0ff;
+  --text-muted: #7b7bc2;
+  --border: #0f3460;
+  --monster: #e94560;
+  font-family: 'Courier New', monospace;
+}
+
+/* 森林主题 */
+body.theme-forest {
+  --bg-dark: #0a1f0a;
+  --bg-darker: #051005;
+  --bg-card: #13281a;
+  --bg-card-hover: #1a3824;
+  --primary: #059669;
+  --primary-light: #34d399;
+  --accent: #eab308;
+  --danger: #f87171;
+  --success: #10b981;
+  --text: #d1fae5;
+  --text-muted: #6b8e7a;
+  --border: #1f4a2f;
+  --monster: #10b981;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -56,6 +108,28 @@ body {
   color: var(--text-muted);
   font-size: 14px;
   letter-spacing: 4px;
+}
+
+.theme-toggle {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.theme-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.theme-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary-light);
 }
 
 .menu {

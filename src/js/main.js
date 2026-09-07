@@ -16,6 +16,7 @@ const Game = {
       KeyboardShortcuts.init();
     }
     this.loadPrefs();
+    this.loadTheme();
     this.bindEvents();
     this.updateContinueButton();
     this.showScreen('start-screen');
@@ -95,6 +96,12 @@ const Game = {
       document.getElementById('btn-sound').textContent = enabled ? '🔊' : '🔇';
       if (enabled) Sound.click();
     });
+
+    // 主题切换
+    const btnTheme = document.getElementById('btn-theme');
+    if (btnTheme) {
+      btnTheme.addEventListener('click', () => this.cycleTheme());
+    }
 
     // 题库选择
     const btnBank = document.getElementById('btn-bank-select');
@@ -209,6 +216,53 @@ const Game = {
 
     this.updateContinueButton();
     return true;
+  },
+
+  // 切换主题（循环切换）
+  cycleTheme() {
+    const themes = ['', 'theme-light', 'theme-classic', 'theme-forest'];
+    const themeNames = ['暗夜', '白日', '经典', '森林'];
+    const body = document.body;
+
+    let currentIdx = 0;
+    for (let i = 1; i < themes.length; i++) {
+      if (body.classList.contains(themes[i])) {
+        currentIdx = i;
+        break;
+      }
+    }
+
+    const nextIdx = (currentIdx + 1) % themes.length;
+    const nextTheme = themes[nextIdx];
+
+    // 清除所有主题
+    themes.forEach(t => { if (t) body.classList.remove(t); });
+    // 应用新主题
+    if (nextTheme) body.classList.add(nextTheme);
+
+    // 更新按钮文字
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.textContent = `🎨 ${themeNames[nextIdx]}`;
+
+    localStorage.setItem('quizgeon_theme', nextTheme);
+    // 更新 theme-color meta
+    const bg = getComputedStyle(body).getPropertyValue('--bg-dark').trim();
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme && bg) metaTheme.content = bg;
+  },
+
+  // 加载保存的主题
+  loadTheme() {
+    const saved = localStorage.getItem('quizgeon_theme') || '';
+    const themes = ['theme-light', 'theme-classic', 'theme-forest'];
+    const themeNames = { '': '暗夜', 'theme-light': '白日', 'theme-classic': '经典', 'theme-forest': '森林' };
+
+    const body = document.body;
+    if (saved && themes.includes(saved)) {
+      body.classList.add(saved);
+    }
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.textContent = `🎨 ${themeNames[saved] || '暗夜'}`;
   },
 
   showScreen(id) {
