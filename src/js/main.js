@@ -11,6 +11,7 @@ const Game = {
   init() {
     Sound.init();
     Sound.loadSetting();
+    if (typeof Haptic !== 'undefined') Haptic.init();
     if (typeof KeyboardShortcuts !== 'undefined') {
       KeyboardShortcuts.init();
     }
@@ -530,6 +531,7 @@ const Game = {
       Player.addGold(this.player, gold);
       Player.onCorrect(this.player);
       Sound.correct();
+      if (typeof Haptic !== 'undefined') Haptic.success();
       this.hitMonster();
       this.showFloatingText(`+${gold}`, 'gold');
       // 吸血遗物
@@ -563,6 +565,7 @@ const Game = {
       }
       Player.onWrong(this.player);
       Sound.hurt();
+      if (typeof Haptic !== 'undefined') Haptic.error();
     }
 
     this.updateStatusBar();

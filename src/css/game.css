@@ -477,6 +477,64 @@ body {
   margin-bottom: 2px;
 }
 
+/* ===== 移动端适配 ===== */
+@media (max-width: 600px) {
+  .game-title { font-size: 2.2rem; }
+  .monster-emoji { font-size: 64px; }
+  .monster-name { font-size: 16px; }
+  .question-text { font-size: 16px; }
+  .option-btn { padding: 10px 14px; font-size: 14px; min-height: 48px; }
+  .status-bar { padding: 8px 12px; gap: 8px; font-size: 12px; }
+  .battle-area { padding: 16px 12px; }
+  .item-bar { padding: 8px 12px; font-size: 12px; }
+  .shop-grid { grid-template-columns: 1fr; }
+  .class-options { gap: 6px; }
+  .class-btn { padding: 8px 2px; }
+  .class-emoji { font-size: 20px; }
+  .class-name { font-size: 11px; }
+  .bank-card { padding: 16px; }
+  .bank-emoji { font-size: 32px; }
+
+  /* 安全区域 */
+  .screen {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* 按钮最小触摸区域 */
+  button {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 禁用双击缩放 */
+  * {
+    touch-action: manipulation;
+  }
+}
+
+/* 小屏手机 */
+@media (max-width: 360px) {
+  .game-title { font-size: 1.8rem; }
+  .menu { max-width: 100%; }
+  .difficulty-options { gap: 6px; }
+  .diff-btn { padding: 6px 4px; font-size: 12px; }
+}
+
+/* 横屏模式 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .title-box { padding: 10px 0; }
+  .game-title { font-size: 1.5rem; margin-bottom: 0; }
+  .subtitle { display: none; }
+  .menu { max-width: 300px; margin-bottom: 10px; gap: 8px; }
+  .battle-area { padding: 10px 20px; }
+  .monster-emoji { font-size: 48px; }
+  .question-text { font-size: 14px; margin-bottom: 12px; }
+  .option-btn { padding: 8px 14px; font-size: 13px; }
+}
+
 .ach-desc {
   font-size: 12px;
   opacity: 0.9;
