@@ -42,6 +42,11 @@ const Game = {
     const diff = localStorage.getItem('quizgeon_difficulty') || 'normal';
     this.selectDifficulty(diff);
 
+    const bank = localStorage.getItem('quizgeon_bank') || 'llm-interview';
+    if (window.QUESTION_BANKS && window.QUESTION_BANKS[bank]) {
+      this.selectBank(bank);
+    }
+
     const sound = localStorage.getItem(CONFIG.save.soundKey);
     document.getElementById('btn-sound').textContent = sound === '0' ? '🔇' : '🔊';
   },
@@ -89,6 +94,16 @@ const Game = {
       document.getElementById('btn-sound').textContent = enabled ? '🔊' : '🔇';
       if (enabled) Sound.click();
     });
+
+    // 题库选择
+    const btnBank = document.getElementById('btn-bank-select');
+    if (btnBank) {
+      btnBank.addEventListener('click', () => this.showBankScreen());
+    }
+    const btnBankBack = document.getElementById('btn-bank-back');
+    if (btnBankBack) {
+      btnBankBack.addEventListener('click', () => this.showScreen('start-screen'));
+    }
 
     // 返回主菜单
     document.getElementById('btn-menu').addEventListener('click', () => {
@@ -143,6 +158,56 @@ const Game = {
       btn.classList.toggle('active', btn.dataset.diff === diff);
     });
     localStorage.setItem('quizgeon_difficulty', diff);
+  },
+
+  // 显示题库选择界面
+  showBankScreen() {
+    const banks = window.QUESTION_BANKS || {};
+    const listEl = document.getElementById('bank-list');
+    if (!listEl) { this.showScreen('start-screen'); return; }
+
+    const currentBank = this.selectedBank || 'llm-interview';
+    let html = '';
+    for (const [id, bank] of Object.entries(banks)) {
+      const active = id === currentBank ? 'active' : '';
+      html += `
+        <div class="bank-card ${active}" data-bank="${id}">
+          <div class="bank-emoji">${bank.emoji || '📚'}</div>
+          <div class="bank-info">
+            <div class="bank-name">${bank.name || id}</div>
+            <div class="bank-desc">${bank.description || ''}</div>
+            <div class="bank-count">${bank.questionCount || 0} 道题</div>
+          </div>
+          ${active ? '<div style="color: var(--primary); font-size: 20px;">✓</div>' : ''}
+        </div>
+      `;
+    }
+    listEl.innerHTML = html;
+
+    // 绑定点击
+    listEl.querySelectorAll('.bank-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const bankId = card.dataset.bank;
+        this.selectBank(bankId);
+        this.showBankScreen(); // 刷新
+      });
+    });
+
+    this.showScreen('bank-screen');
+  },
+
+  // 选择题库
+  selectBank(bankId) {
+    const banks = window.QUESTION_BANKS || {};
+    const bank = banks[bankId];
+    if (!bank) return false;
+
+    this.selectedBank = bankId;
+    window.QUESTION_BANK = bank.questions;
+    localStorage.setItem('quizgeon_bank', bankId);
+
+    this.updateContinueButton();
+    return true;
   },
 
   showScreen(id) {
