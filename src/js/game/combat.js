@@ -1,4 +1,4 @@
-// 战斗系统 — 答题核心
+// 战斗系统 — 答题核心逻辑
 const Combat = {
   // 检查答案
   checkAnswer(question, userAnswer) {
@@ -8,35 +8,63 @@ const Combat = {
     if (type === 'single') {
       return userAnswer === correct;
     } else if (type === 'multiple') {
-      // 多选：排序后比较
       const sortedUser = [...userAnswer].sort();
       const sortedCorrect = [...correct].sort();
       return sortedUser.length === sortedCorrect.length &&
              sortedUser.every((v, i) => v === sortedCorrect[i]);
     } else if (type === 'boolean') {
       return userAnswer === correct;
-    } else if (type === 'fill') {
-      // 填空：忽略大小写和首尾空格
-      return userAnswer.trim().toLowerCase() === correct.trim().toLowerCase();
+    } else if (type === 'fill' || type === 'open') {
+      // 填空/开放题用关键词判分（不在这处理，用 gradeOpenAnswer）
+      return false;
     }
     return false;
   },
 
   // 计算伤害（玩家答错时受到的伤害）
   calcDamage(question) {
-    const base = { easy: 12, medium: 20, hard: 30 };
+    const base = CONFIG.combat.damage;
     const diff = question.difficulty || 'easy';
-    // 随机浮动 ±20%
-    const base_dmg = base[diff] || 12;
-    return Math.round(base_dmg * (0.8 + Math.random() * 0.4));
+    const base_dmg = base[diff] || base.easy;
+    return Utils.randVariance(base_dmg, CONFIG.combat.variance);
   },
 
   // 计算金币奖励
   calcGold(question) {
-    const base = { easy: 8, medium: 15, hard: 25 };
+    const base = CONFIG.combat.gold;
     const diff = question.difficulty || 'easy';
-    const base_g = base[diff] || 8;
-    return Math.round(base_g * (0.8 + Math.random() * 0.4));
+    const base_g = base[diff] || base.easy;
+    return Utils.randVariance(base_g, CONFIG.combat.variance);
+  },
+
+  // 开放题关键词判分
+  gradeOpenAnswer(question, userAnswer) {
+    const keywords = question.answer || [];
+    const answerLower = (userAnswer || '').toLowerCase().trim();
+    const matched = [];
+    const missed = [];
+
+    keywords.forEach(kw => {
+      const kwLower = String(kw).toLowerCase();
+      if (answerLower.includes(kwLower)) {
+        matched.push(kw);
+      } else {
+        missed.push(kw);
+      }
+    });
+
+    const minKeywords = question.min_keywords || CONFIG.openQuestion.defaultMinKeywords;
+    const score = keywords.length > 0 ? matched.length / keywords.length : 0;
+    const passed = matched.length >= minKeywords;
+
+    return {
+      passed,
+      score,
+      matched,
+      missed,
+      matchCount: matched.length,
+      totalKeywords: keywords.length
+    };
   },
 
   // 渲染题目 + 选项
@@ -47,10 +75,11 @@ const Combat = {
     const monsterName = container.querySelector('#monster-name');
     const monsterType = container.querySelector('#monster-type');
 
+    // 安全渲染题目文本
     qText.textContent = question.question;
     optionsContainer.innerHTML = '';
 
-    // 怪物信息从外部设置
+    // 怪物信息
     if (question._monster) {
       monsterEmoji.textContent = question._monster.emoji;
       monsterName.textContent = question._monster.name;
@@ -63,7 +92,14 @@ const Combat = {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.dataset.letter = letter;
-        btn.innerHTML = `<span class="opt-letter">${letter}</span><span class="opt-text">${opt.replace(/^[A-D]\.\s*/, '')}</span>`;
+
+        // 去掉选项前的 A./B. 前缀（如果有的话）
+        const optText = opt.replace(/^[A-D]\.\s*/, '');
+
+        btn.innerHTML = `
+          <span class="opt-letter">${letter}</span>
+          <span class="opt-text">${Utils.escapeHtml(optText)}</span>
+        `;
         btn.addEventListener('click', () => {
           if (question.type === 'single') {
             onAnswer(letter);
@@ -100,12 +136,12 @@ const Combat = {
         optionsContainer.appendChild(btn);
       });
     } else if (question.type === 'open') {
-      // 开放题：文本输入框
       const textarea = document.createElement('textarea');
       textarea.className = 'open-answer-input';
       textarea.placeholder = '请输入你的答案...（尽量用自己的话完整解释）';
       textarea.rows = 6;
       optionsContainer.appendChild(textarea);
+      textarea.focus();
 
       const submitBtn = document.createElement('button');
       submitBtn.className = 'btn-primary submit-open';
@@ -119,39 +155,14 @@ const Combat = {
         onAnswer(answer);
       });
       optionsContainer.appendChild(submitBtn);
+
+      // Ctrl/Cmd + Enter 提交
+      textarea.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          submitBtn.click();
+        }
+      });
     }
-  },
-
-  // 开放题关键词判分
-  gradeOpenAnswer(question, userAnswer) {
-    const keywords = question.answer || [];
-    const answerLower = userAnswer.toLowerCase();
-    let matched = [];
-    let missed = [];
-
-    keywords.forEach(kw => {
-      // 关键词转小写，检查是否出现在答案中
-      const kwLower = kw.toLowerCase();
-      // 简单匹配：检查关键词的核心词
-      if (answerLower.includes(kwLower)) {
-        matched.push(kw);
-      } else {
-        missed.push(kw);
-      }
-    });
-
-    const minKeywords = question.min_keywords || 3;
-    const score = matched.length / keywords.length;
-    const passed = matched.length >= minKeywords;
-
-    return {
-      passed,
-      score,
-      matched,
-      missed,
-      matchCount: matched.length,
-      totalKeywords: keywords.length
-    };
   },
 
   // 显示答题反馈
@@ -161,19 +172,24 @@ const Combat = {
     const feedbackExp = container.querySelector('#feedback-explanation');
     const optionsContainer = container.querySelector('#options-container');
 
-    // 高亮正确/错误选项
-    const optionBtns = optionsContainer.querySelectorAll('.option-btn');
-    optionBtns.forEach(btn => {
-      btn.disabled = true;
-      const letter = btn.dataset.letter;
-      if (letter === question.answer ||
-          (Array.isArray(question.answer) && question.answer.includes(letter))) {
-        btn.classList.add('correct');
-      } else if (btn.classList.contains('selected') ||
-                 (btn.dataset.userSelected && letter === btn.dataset.userSelected)) {
-        btn.classList.add('wrong');
-      }
-    });
+    // 高亮正确/错误选项（选择题）
+    if (question.type !== 'open') {
+      const optionBtns = optionsContainer.querySelectorAll('.option-btn');
+      optionBtns.forEach(btn => {
+        btn.disabled = true;
+        const letter = btn.dataset.letter;
+        const isCorrectOption = letter === question.answer ||
+          (Array.isArray(question.answer) && question.answer.includes(letter));
+        const isUserSelected = btn.classList.contains('selected') ||
+          btn.dataset.userSelected === 'true';
+
+        if (isCorrectOption) {
+          btn.classList.add('correct');
+        } else if (isUserSelected) {
+          btn.classList.add('wrong');
+        }
+      });
+    }
 
     feedbackBox.style.display = 'block';
     if (isCorrect) {
@@ -183,9 +199,34 @@ const Combat = {
       feedbackTitle.innerHTML = '❌ 答错了...';
       feedbackTitle.className = 'feedback-title wrong';
     }
-    feedbackExp.innerHTML = question.explanation || '';
+    feedbackExp.textContent = question.explanation || '';
 
     const nextBtn = container.querySelector('#btn-next');
     nextBtn.onclick = onNext;
+  },
+
+  // 50/50 排除两个错误选项
+  applyFiftyFifty(question, container) {
+    const optionsContainer = container.querySelector('#options-container');
+    const btns = optionsContainer.querySelectorAll('.option-btn');
+    if (!btns.length) return;
+
+    const wrongIndices = [];
+    btns.forEach((btn, idx) => {
+      const letter = btn.dataset.letter;
+      if (letter !== question.answer &&
+          !(Array.isArray(question.answer) && question.answer.includes(letter))) {
+        wrongIndices.push(idx);
+      }
+    });
+
+    // 随机排除 2 个
+    const toRemove = Utils.shuffle(wrongIndices).slice(0, 2);
+    toRemove.forEach(idx => {
+      const btn = btns[idx];
+      btn.style.opacity = '0.3';
+      btn.style.pointerEvents = 'none';
+      btn.querySelector('.opt-text').textContent = '---';
+    });
   }
 };

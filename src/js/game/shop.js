@@ -1,105 +1,96 @@
 // 商店系统
 const Shop = {
-  items: {
-    potion: {
-      id: 'potion',
-      name: '小血瓶',
-      emoji: '🧪',
-      price: 20,
-      desc: '回复 30 HP',
-      use(player) {
-        Player.heal(player, 30);
-        return '回复了 30 HP';
-      }
-    },
-    bigPotion: {
-      id: 'bigPotion',
-      name: '大血瓶',
-      emoji: '🍷',
-      price: 40,
-      desc: '回复 70 HP',
-      use(player) {
-        Player.heal(player, 70);
-        return '回复了 70 HP';
-      }
-    },
-    skip: {
-      id: 'skip',
-      name: '跳过符',
-      emoji: '⏭️',
-      price: 25,
-      desc: '跳过当前题，不算答对也不算错',
-      use(player) {
-        return '跳过当前题目';
+  // 所有道具定义
+  getItems() {
+    return {
+      potion: {
+        id: 'potion',
+        name: '小血瓶',
+        emoji: '🧪',
+        price: CONFIG.shop.items.potion.price,
+        desc: `回复 ${CONFIG.shop.items.potion.heal} HP`,
+        type: 'consumable',  // consumable / use-in-battle
+        use(player) {
+          Player.heal(player, CONFIG.shop.items.potion.heal);
+          return `回复了 ${CONFIG.shop.items.potion.heal} HP`;
+        }
       },
-      consumable: true  // 用在题目上，不是直接用
-    },
-    fiftyFifty: {
-      id: 'fiftyFifty',
-      name: '50/50 排除',
-      emoji: '🎯',
-      price: 15,
-      desc: '排除两个错误选项（单选题）',
-      use(player) {
-        return '排除两个错误选项';
+      bigPotion: {
+        id: 'bigPotion',
+        name: '大血瓶',
+        emoji: '🍷',
+        price: CONFIG.shop.items.bigPotion.price,
+        desc: `回复 ${CONFIG.shop.items.bigPotion.heal} HP`,
+        type: 'consumable',
+        use(player) {
+          Player.heal(player, CONFIG.shop.items.bigPotion.heal);
+          return `回复了 ${CONFIG.shop.items.bigPotion.heal} HP`;
+        }
       },
-      consumable: true
-    }
+      skip: {
+        id: 'skip',
+        name: '跳过符',
+        emoji: '⏭️',
+        price: CONFIG.shop.items.skip.price,
+        desc: '跳过当前题，不算答对也不算错',
+        type: 'battle',  // 战斗中使用
+        use(player) { return { type: 'skip' }; }
+      },
+      fiftyFifty: {
+        id: 'fiftyFifty',
+        name: '50/50 排除',
+        emoji: '🎯',
+        price: CONFIG.shop.items.fiftyFifty.price,
+        desc: '排除两个错误选项（单选题）',
+        type: 'battle',
+        use(player) { return { type: 'fiftyFifty' }; }
+      }
+    };
   },
 
-  // 生成商店物品（每次随机3~4个）
+  // 生成商店物品（每次随机 3~4 个）
   generateShopItems() {
-    const itemList = Object.values(this.items);
-    // 打乱
-    const shuffled = [...itemList].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3 + Math.floor(Math.random() * 2));
+    const items = Object.values(this.getItems());
+    const shuffled = Utils.shuffle(items);
+    const count = Utils.randInt(CONFIG.shop.itemsPerShop[0], CONFIG.shop.itemsPerShop[1]);
+    return shuffled.slice(0, count);
   },
 
   // 买东西
   buy(player, itemId) {
-    const item = this.items[itemId];
+    const items = this.getItems();
+    const item = items[itemId];
     if (!item) return { success: false, msg: '物品不存在' };
     if (player.gold < item.price) return { success: false, msg: '金币不足' };
 
     player.gold -= item.price;
 
-    // 消耗品进入背包，回复类直接用
-    if (item.consumable) {
+    if (item.type === 'battle') {
+      // 战斗用道具进入背包
       if (!player.items[itemId]) player.items[itemId] = 0;
       player.items[itemId]++;
       return { success: true, msg: `获得 ${item.name} ×1` };
     } else {
+      // 消耗品直接使用
       const msg = item.use(player);
       return { success: true, msg };
     }
   },
 
-  // 使用道具（战斗中用）
-  useItem(player, itemId, combatCtx) {
-    const item = this.items[itemId];
-    if (!item || !item.consumable) return false;
+  // 使用战斗道具
+  useBattleItem(player, itemId, combatCtx) {
+    const items = this.getItems();
+    const item = items[itemId];
+    if (!item || item.type !== 'battle') return false;
     if (!player.items[itemId] || player.items[itemId] <= 0) return false;
 
     player.items[itemId]--;
+    return item.use(player);
+  },
 
-    if (itemId === 'skip') {
-      return { type: 'skip' };
-    } else if (itemId === 'fiftyFifty') {
-      // 排除两个错误选项
-      const question = combatCtx.question;
-      const options = question.options;
-      const wrongOptions = [];
-      options.forEach((opt, idx) => {
-        const letter = String.fromCharCode(65 + idx);
-        if (letter !== question.answer &&
-            !(Array.isArray(question.answer) && question.answer.includes(letter))) {
-          wrongOptions.push(idx);
-        }
-      });
-      // 随机排除两个
-      const toRemove = wrongOptions.sort(() => Math.random() - 0.5).slice(0, 2);
-      return { type: 'fiftyFifty', removeIndices: toRemove };
-    }
-    return false;
+  // 获取道具显示信息
+  getItemDisplay(itemId) {
+    const items = this.getItems();
+    return items[itemId] || null;
   }
 };
