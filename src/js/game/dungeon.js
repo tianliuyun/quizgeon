@@ -28,6 +28,22 @@ const Dungeon = {
         continue;
       }
 
+      // 宝箱房（第 2 间房之后随机出现，每层 1 个）
+      if (i === 6 && Math.random() < 0.6) {
+        const relic = Relics ? Relics.getRandomRelic(
+          (rooms.filter(r => r.type === 'relic').map(r => r.relic.id))
+        ) : null;
+        if (relic) {
+          rooms.push({
+            type: 'relic',
+            question: null,
+            monster: { emoji: '📦', name: '神秘宝箱', type: '宝箱' },
+            relic: relic
+          });
+          continue;
+        }
+      }
+
       // Boss 房
       if (i === CONFIG.player.bossRoomIndex && bossQuestions.length > 0) {
         const bossQ = bossQuestions[Math.floor(Math.random() * bossQuestions.length)];

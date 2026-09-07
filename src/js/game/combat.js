@@ -30,11 +30,17 @@ const Combat = {
   },
 
   // 计算金币奖励
-  calcGold(question) {
+  calcGold(question, player = null) {
     const base = CONFIG.combat.gold;
     const diff = question.difficulty || 'easy';
-    const base_g = base[diff] || base.easy;
-    return Utils.randVariance(base_g, CONFIG.combat.variance);
+    let base_g = base[diff] || base.easy;
+    base_g = Utils.randVariance(base_g, CONFIG.combat.variance);
+
+    // 遗物加成
+    if (player && typeof Relics !== 'undefined') {
+      base_g = Math.floor(base_g * Relics.getGoldMultiplier(player));
+    }
+    return base_g;
   },
 
   // 开放题关键词判分

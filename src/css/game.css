@@ -440,6 +440,11 @@ body {
 
 .relics-label { margin-right: 8px; }
 
+/* 稀有度颜色 */
+.relic-common { color: #9ca3af; }
+.relic-uncommon { color: #10b981; }
+.relic-rare { color: #f59e0b; }
+
 /* ===== 图鉴界面 ===== */
 .codex-header, .stats-header {
   display: flex;

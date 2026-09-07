@@ -228,6 +228,12 @@ const Game = {
       return;
     }
 
+    // 宝箱房（遗物）
+    if (room.type === 'relic') {
+      this.renderRelicRoom(room);
+      return;
+    }
+
     // Boss 房
     if (room.type === 'boss') {
       this.enterBossRoom(room);
@@ -300,13 +306,29 @@ const Game = {
     SaveSystem.updateCodex(question.id, isCorrect);
 
     if (isCorrect) {
-      const gold = Combat.calcGold(question);
+      let gold = Combat.calcGold(question, this.player);
       Player.addGold(this.player, gold);
       Player.onCorrect(this.player);
       Sound.correct();
+      // 吸血遗物
+      if (typeof Relics !== 'undefined') {
+        const vampire = this.player.relics?.find(r => r.id === 'vampireFangs');
+        if (vampire) {
+          Player.heal(this.player, vampire.effect.value);
+        }
+      }
     } else {
-      const damage = Combat.calcDamage(question);
+      let damage = Combat.calcDamage(question);
+      // 伤害减免遗物
+      if (typeof Relics !== 'undefined') {
+        damage = Math.floor(damage * Relics.getDamageMultiplier(this.player));
+      }
       const dead = Player.takeDamage(this.player, damage);
+      // 凤凰羽毛复活
+      if (dead && typeof Relics !== 'undefined' && Relics.canRevive(this.player)) {
+        Relics.doRevive(this.player);
+        Sound.victory();
+      }
       Player.onWrong(this.player);
       Sound.hurt();
     }
@@ -398,6 +420,45 @@ const Game = {
       this.enterRoom();
     });
     optionsContainer.appendChild(leaveBtn);
+  },
+
+  // 宝箱房（遗物）
+  renderRelicRoom(room) {
+    const qText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const relic = room.relic;
+
+    this.updateMonsterDisplay({ emoji: '📦', name: '神秘宝箱', type: '宝箱' });
+
+    const color = Relics.rarityColors[relic.rarity] || '#fff';
+    qText.innerHTML = `
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 64px; margin-bottom: 8px;">${relic.emoji}</div>
+        <div style="font-size: 20px; font-weight: bold; color: ${color};">${relic.name}</div>
+        <div style="font-size: 12px; color: ${color}; margin-top: 4px;">
+          ${relic.rarity === 'common' ? '普通' : relic.rarity === 'uncommon' ? '稀有' : '史诗'}
+        </div>
+        <div style="margin-top: 12px; padding: 12px; background: var(--bg-darker); border-radius: 6px;">
+          ${relic.desc}
+        </div>
+      </div>
+    `;
+
+    optionsContainer.innerHTML = '';
+    const takeBtn = document.createElement('button');
+    takeBtn.className = 'btn-primary';
+    takeBtn.textContent = '✨ 拾取遗物，继续冒险 →';
+    takeBtn.style.width = '100%';
+    takeBtn.addEventListener('click', () => {
+      Relics.applyRelic(this.player, relic);
+      Sound.coin();
+      this.updateStatusBar();
+      this.updateItemBar();
+      this.roomIndex++;
+      this.autoSave();
+      this.enterRoom();
+    });
+    optionsContainer.appendChild(takeBtn);
   },
 
   // 更新道具栏
@@ -543,7 +604,16 @@ const Game = {
   },
 
   handleBossPhase2(bossQ, userAnswer, monster) {
-    const result = Combat.gradeOpenAnswer(bossQ, userAnswer);
+    // 智慧宝珠降低关键词要求
+    let adjustedQ = { ...bossQ };
+    if (typeof Relics !== 'undefined') {
+      const reduction = Relics.getBossKeywordReduction(this.player);
+      if (reduction > 0) {
+        adjustedQ.min_keywords = Math.max(1, (bossQ.min_keywords || CONFIG.openQuestion.defaultMinKeywords) - reduction);
+      }
+    }
+
+    const result = Combat.gradeOpenAnswer(adjustedQ, userAnswer);
     const optionsContainer = document.getElementById('options-container');
 
     SaveSystem.updateCodex(bossQ.id, result.passed);
