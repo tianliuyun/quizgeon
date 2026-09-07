@@ -1,0 +1,262 @@
+# 第 3 层：RAG、Agent 与推理优化
+# 难度：中级~高级，共 11 题（含 1 道 Boss 开放题）
+
+- id: rag-001
+  difficulty: easy
+  type: single
+  question: RAG 的全称是什么？核心思想是什么？
+  options:
+    - A. Retrieval-Augmented Generation — 检索增强生成，先搜相关文档再回答
+    - B. Random Answer Generation — 随机答案生成
+    - C. Reverse Attention Generation — 反向注意力生成
+    - D. Retrieval Attention Gating — 检索注意力门控
+  answer: A
+  explanation: |
+    RAG = Retrieval-Augmented Generation（检索增强生成）。
+    核心思想：让 LLM 在回答问题前，先从外部知识库检索相关文档/片段，
+    把检索到的内容作为上下文喂给模型，再生成答案。
+    解决三大问题：知识过时、幻觉、私有数据。
+  tags:
+    - rag
+    - retrieval-augmented-generation
+  related:
+    - RAG 基础概念
+
+- id: rag-002
+  difficulty: easy
+  type: single
+  question: RAG 系统通常由哪两大模块组成？
+  options:
+    - A. 索引模块 + 检索模块
+    - B. 编码模块 + 解码模块
+    - C. 离线索引阶段 + 在线检索生成阶段
+    - D. 训练模块 + 推理模块
+  answer: C
+  explanation: |
+    RAG 分两大阶段：
+    1. 离线索引：文档 → 切块 → 向量化 → 存入向量数据库
+    2. 在线检索生成：用户 Query → 向量化 → 检索 Top-K → 拼接 Prompt → LLM 生成
+    简单说就是「先存后取」，存的时候建索引，用的时候检索+生成。
+  tags:
+    - rag
+    - pipeline
+  related:
+    - RAG 两阶段
+
+- id: rag-003
+  difficulty: medium
+  type: single
+  question: 向量检索中，常见的相似度度量方法不包括哪个？
+  options:
+    - A. 余弦相似度（Cosine Similarity）
+    - B. 欧氏距离（L2 Distance）
+    - C. 内积（Inner Product / Dot Product）
+    - D. 交叉熵（Cross Entropy）
+  answer: D
+  explanation: |
+    常见相似度度量：
+    - 余弦相似度：衡量方向差异，值域 [-1, 1]，不关心向量长度
+    - 欧氏距离（L2）：衡量空间距离，值域 [0, ∞)
+    - 内积/点积：考虑方向+长度，向量归一化后等价于余弦
+    交叉熵是损失函数，不是相似度度量。
+  tags:
+    - rag
+    - vector-search
+    - similarity
+  related:
+    - 向量相似度
+
+- id: rag-004
+  difficulty: medium
+  type: single
+  question: RAG 中「Chunking（文档切块）」策略对效果影响很大，以下哪种说法是错误的？
+  options:
+    - A. 块太小会导致语义不完整，影响回答质量
+    - B. 块越大越好，信息越全回答越准
+    - C. 常用的切块方法有固定长度、按句子/段落、语义切块
+    - D. 块大小要结合 Embedding 模型的最大上下文来选
+  answer: B
+  explanation: |
+    块不是越大越好。太大的问题：
+    1. 单块信息密度低，检索噪音大，引入无关内容
+    2. 超过 Embedding 模型最大输入长度会被截断
+    3. 拼接进 Prompt 时占 token 多，能放的块数少
+    一般 512~1024 token 比较常见，要根据场景调。
+  tags:
+    - rag
+    - chunking
+  related:
+    - 文档切块策略
+
+- id: rag-005
+  difficulty: medium
+  type: single
+  question: 以下哪个不是 RAG 常见的优化方向？
+  options:
+    - A. 混合检索（关键词 + 向量）
+    - B. 重排序（Reranking）
+    - C. 查询改写（Query Rewriting）
+    - D. 增加模型参数量
+  answer: D
+  explanation: |
+    RAG 优化方向：
+    - 混合检索：BM25 关键词 + 向量检索互补，解决字面匹配问题
+    - 重排序：用 Cross-Encoder 对初筛结果重新排序，更精准
+    - 查询改写：用 LLM 把用户问题扩展/改写，提高召回率
+    - 增加模型参数是提升 LLM 本身，不算 RAG 特定优化。
+  tags:
+    - rag
+    - optimization
+  related:
+    - RAG 优化
+
+- id: rag-006
+  difficulty: medium
+  type: single
+  question: Agent（智能体）和 RAG 的主要区别是什么？
+  options:
+    - A. Agent 更贵，RAG 更便宜
+    - B. RAG 只是检索+生成，Agent 有规划、工具调用、反思的闭环
+    - C. Agent 用的模型更大
+    - D. 两者是一回事，只是名字不同
+  answer: B
+  explanation: |
+    RAG = 检索 + 生成（被动调用，一次完成）
+    Agent = 感知 + 规划 + 工具调用 + 反思的多轮闭环（主动决策）
+    
+    Agent 核心能力：
+    1. 规划（Plan）：拆解复杂任务
+    2. 工具使用（Tool Use）：调用搜索/代码/API
+    3. 记忆（Memory）：短期+长期记忆
+    4. 反思（Reflection）：自我纠错
+    RAG 可以是 Agent 的一个工具。
+  tags:
+    - agent
+    - rag
+  related:
+    - Agent vs RAG
+
+- id: rag-007
+  difficulty: medium
+  type: single
+  question: ReAct 框架的核心思想是什么？
+  options:
+    - A. 只思考不行动
+    - B. 只行动不思考
+    - C. 推理（Reasoning）和行动（Acting）交替进行，边想边做
+    - D. 先做完全部推理再行动
+  answer: C
+  explanation: |
+    ReAct = Reasoning + Acting
+    核心：让 LLM 交替生成「思考过程」和「行动」，
+    每一步先想（推理为什么要做），再做（调用工具），
+    再观察结果，再思考下一步... 形成闭环。
+    这样模型的决策过程可解释，也能通过工具获取实时信息。
+  tags:
+    - agent
+    - react
+  related:
+    - ReAct 框架
+
+- id: rag-008
+  difficulty: hard
+  type: single
+  question: 关于推理时计算量优化，以下哪种方法是「投机采样（Speculative Decoding）」的核心思路？
+  options:
+    - A. 用小模型快速猜几个 token，大模型验证，对的就直接跳过
+    - B. 减少模型层数
+    - C. 用量化降低精度
+    - D. 用更短的 Prompt
+  answer: A
+  explanation: |
+    投机采样核心：用一个小模型（草稿模型）快速生成多个候选 token，
+    然后用大模型并行验证（一次前向），猜对的 token 直接接受，
+    猜错的从第一个错的地方重新生成。
+    本质是用小模型的算力换大模型的解码步数，
+    速度提升 2~3 倍，输出分布完全不变。
+  tags:
+    - inference
+    - speculative-decoding
+    - optimization
+  related:
+    - 投机采样
+
+- id: rag-009
+  difficulty: medium
+  type: single
+  question: KV Cache 的作用是什么？
+  options:
+    - A. 缓存模型权重，加快加载
+    - B. 缓存已生成 token 的 Key 和 Value，避免重复计算
+    - C. 缓存用户的历史对话
+    - D. 缓存数据库查询结果
+  answer: B
+  explanation: |
+    KV Cache：自回归生成时，每生成一个新 token，
+    之前所有 token 的 K 和 V 都是不变的（因为注意力计算只依赖已有 token）。
+    把它们缓存下来，下一步只算新 token 的 KV，
+    不用重新算整个序列的，大幅减少计算量。
+    这是推理加速的基础优化，所有框架都默认开。
+  tags:
+    - inference
+    - kv-cache
+    - optimization
+  related:
+    - KV Cache
+
+- id: rag-010
+  difficulty: hard
+  type: single
+  question: 关于模型量化，以下哪个说法是正确的？
+  options:
+    - A. 量化一定会显著降低模型效果
+    - B. GGUF 是一种量化格式，主要用于 llama.cpp
+    - C. 4bit 量化就是把模型缩小到原来的 1/4，速度也是 4 倍
+    - D. 量化只影响显存，不影响推理速度
+  answer: B
+  explanation: |
+    GGUF（GPT-Generated Unified Format）是 llama.cpp 推出的格式，
+    支持多种量化精度（Q4_K_M, Q5_K_M, Q8_0 等），是本地推理的主流格式。
+    A 错：4bit/8bit 在大模型上感知不明显，AWQ/GPTQ 质量很好。
+    C 错：显存省 4 倍，但速度不是 4 倍（计算密度 + 访存瓶颈）。
+    D 错：量化也能加速（计算量减少 + 访存减少）。
+  tags:
+    - inference
+    - quantization
+    - gguf
+  related:
+    - 模型量化
+
+- id: rag-boss-1
+  difficulty: hard
+  type: open
+  question: 请简述一个完整的 RAG 系统从文档接入到用户问答的完整流程，并说明至少 3 个关键优化点及其作用。
+  answer:
+    - 文档接入清洗预处理去重
+    - 文档切块Chunking策略
+    - 向量化Embedding模型生成向量
+    - 存入向量数据库建立索引
+    - 用户查询Query向量化
+    - 向量检索召回TopK相关片段
+    - 混合检索关键词BM25向量互补
+    - 重排序Reranker精排提高精度
+    - 拼接Prompt上下文LLM生成答案
+    - 查询改写Query Rewriting扩展召回
+    - 分块策略影响语义完整性召回率
+  explanation: |
+    RAG 完整流程：
+    1. 离线阶段：文档采集 → 清洗/去重 → 切块（Chunking）→ Embedding 向量化 → 存入向量库
+    2. 在线阶段：用户 Query → 向量化 → 检索 Top-K →（可选：重排序）→ 拼接到 Prompt → LLM 生成
+    
+    关键优化点：
+    - 混合检索：BM25 + 向量，解决字面匹配和语义匹配互补
+    - 重排序（Rerank）：初筛召回多一些，用 Cross-Encoder 精排，精准度大幅提升
+    - 查询改写：用 LLM 扩展/改写用户问题，提高召回率（尤其针对短查询）
+    - 文档切块：按语义切块优于固定长度，保证块内语义完整
+    - 父文档检索：检索小块，返回父块，保证上下文完整
+  tags:
+    - rag
+    - pipeline
+    - optimization
+    - boss
+  min_keywords: 5

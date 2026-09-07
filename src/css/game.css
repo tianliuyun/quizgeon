@@ -1,0 +1,623 @@
+/* Quizgeon 题牢 — 游戏样式 */
+:root {
+  --bg-dark: #0f0a1a;
+  --bg-darker: #080510;
+  --bg-card: #1a1328;
+  --bg-card-hover: #251938;
+  --primary: #7c3aed;
+  --primary-light: #a78bfa;
+  --accent: #f59e0b;
+  --danger: #ef4444;
+  --success: #10b981;
+  --text: #e9e4f0;
+  --text-muted: #9ca3af;
+  --border: #2e2240;
+  --monster: #8b5cf6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Courier New', 'Noto Sans CJK SC', monospace;
+  background: var(--bg-dark);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  min-height: 100vh;
+}
+
+/* 屏幕切换 */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ===== 主菜单 ===== */
+.title-box {
+  text-align: center;
+  margin: 80px 0 60px;
+}
+
+.game-title {
+  font-size: 72px;
+  font-weight: 900;
+  color: var(--primary-light);
+  text-shadow: 0 0 30px rgba(124, 58, 237, 0.5),
+               0 0 60px rgba(124, 58, 237, 0.3);
+  letter-spacing: 8px;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  letter-spacing: 4px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 280px;
+  margin: 0 auto 40px;
+}
+
+.mode-selector {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.mode-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.mode-options {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px 8px;
+  background: var(--bg-darker);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  border-color: var(--primary-light);
+}
+
+.mode-btn.active {
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.2);
+  color: var(--primary-light);
+  font-weight: bold;
+}
+
+.tip {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ===== 按钮 ===== */
+.btn-primary, .btn-secondary {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 14px 24px;
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--primary-light);
+}
+
+.btn-secondary:hover {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: var(--primary-light);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== 状态栏 ===== */
+.status-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hp-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.hp-section .label {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.hp-bar {
+  flex: 1;
+  height: 20px;
+  background: var(--bg-darker);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f59e0b);
+  transition: width 0.3s ease;
+}
+
+.hp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+
+.info-section {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.info-section .gold { color: var(--accent); font-weight: bold; }
+
+.sound-toggle {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: all 0.2s;
+}
+
+.sound-toggle:hover {
+  color: var(--accent);
+  transform: scale(1.1);
+}
+
+/* ===== 战斗区 ===== */
+.battle-area {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.monster-box {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.1), transparent);
+  border-radius: 8px;
+}
+
+.monster-emoji {
+  font-size: 64px;
+  margin-bottom: 8px;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.monster-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--monster);
+}
+
+.monster-type {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* 题目 */
+.question-box {
+  margin-bottom: 20px;
+}
+
+.question-text {
+  font-size: 17px;
+  line-height: 1.8;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--bg-darker);
+  border-left: 4px solid var(--primary);
+  border-radius: 4px;
+  min-height: 60px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-darker);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.option-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--bg-card-hover);
+  transform: translateX(4px);
+}
+
+.option-btn.selected {
+  border-color: var(--accent);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.option-btn.correct {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.option-btn.wrong {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.option-btn:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.opt-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.opt-text { flex: 1; }
+
+.submit-multi {
+  margin-top: 10px;
+  align-self: center;
+}
+
+.open-answer-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 16px;
+  background: var(--bg-darker);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.open-answer-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.submit-open {
+  width: 100%;
+}
+
+/* 反馈区 */
+.feedback-box {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.feedback-box.correct {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.feedback-box.wrong {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.feedback-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.feedback-title.correct { color: var(--success); }
+.feedback-title.wrong { color: var(--danger); }
+
+.feedback-explanation {
+  margin-bottom: 16px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-line;
+}
+
+.feedback-box .btn-primary {
+  width: 100%;
+}
+
+/* 遗物栏 */
+.relic-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.relics-label { margin-right: 8px; }
+
+/* ===== 图鉴界面 ===== */
+.codex-header, .stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+
+.codex-header h2, .stats-header h2 {
+  color: var(--primary-light);
+}
+
+.codex-progress {
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 18px;
+}
+
+.codex-progress strong {
+  color: var(--accent);
+  font-size: 24px;
+}
+
+.codex-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.codex-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  transition: all 0.2s;
+}
+
+.codex-item:hover { border-color: var(--primary); }
+
+.codex-item.mastered { border-left: 4px solid var(--success); }
+.codex-item.weak { border-left: 4px solid var(--danger); }
+.codex-item.learning { border-left: 4px solid var(--accent); }
+
+.codex-question {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.codex-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.codex-status { font-weight: bold; }
+.codex-item.mastered .codex-status { color: var(--success); }
+.codex-item.weak .codex-status { color: var(--danger); }
+.codex-item.learning .codex-status { color: var(--accent); }
+
+.empty-tip {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 60px 20px;
+  font-style: italic;
+}
+
+/* ===== 统计界面 ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--primary-light);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.stats-content h3 {
+  margin: 24px 0 16px;
+  color: var(--primary-light);
+}
+
+.upgrade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upgrade-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.upgrade-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ===== 游戏结束 ===== */
+.gameover-box {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.gameover-box h2 {
+  font-size: 28px;
+  color: var(--danger);
+  margin-bottom: 30px;
+}
+
+.gameover-stats, .gameover-rewards {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: left;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gameover-stats p, .gameover-rewards p {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.gameover-stats p:last-child, .gameover-rewards p:last-child {
+  border-bottom: none;
+}
+
+.gameover-box .btn-primary {
+  margin-top: 20px;
+  margin-bottom: 12px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.gameover-box .btn-secondary {
+  width: 100%;
+  max-width: 280px;
+}
+
+/* 响应式 */
+@media (max-width: 480px) {
+  .game-title { font-size: 48px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .question-text { font-size: 15px; }
+  .monster-emoji { font-size: 48px; }
+  .status-bar { flex-direction: column; align-items: stretch; }
+  .hp-section { width: 100%; }
+}

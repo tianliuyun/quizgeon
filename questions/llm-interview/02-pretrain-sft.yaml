@@ -1,0 +1,267 @@
+- id: pre-001
+  difficulty: easy
+  type: single
+  question: 从原始文本到一个能对话的 AI 助手，大模型训练的四阶段正确顺序是？
+  options:
+  - A. 预训练 → SFT → 数据准备 → 对齐
+  - B. 数据准备 → 预训练 → SFT → 对齐
+  - C. SFT → 预训练 → 对齐 → 数据准备
+  - D. 数据准备 → 对齐 → 预训练 → SFT
+  answer: B
+  explanation: '四阶段：数据准备（清洗去重分词）→ 预训练（下一词预测，获得语言能力）
+
+    → SFT 监督微调（学会按指令回答）→ 对齐（RLHF/DPO/GRPO，符合人类偏好）。
+
+    口诀：预训练给知识，SFT 给格式，对齐给价值观。
+
+    '
+  tags:
+  - pretrain
+  - sft
+  - rlhf
+  related:
+  - 训练四阶段
+- id: pre-002
+  difficulty: easy
+  type: single
+  question: SFT（监督微调）中，为什么要使用 Label Mask（只在 assistant 部分算 loss）？
+  options:
+  - A. 减少显存占用
+  - B. 让模型学会「如何回答」，而不是背熟用户的问题
+  - C. 加快训练速度
+  - D. 防止过拟合
+  answer: B
+  explanation: '对话数据格式：<|user|>问题<|assistant|>回答
+
+    user 部分 labels 设为 -100（不计算 loss），只让 assistant 部分参与训练。
+
+    目的：只想让模型学会「如何回答问题」，不需要背熟用户的提问。
+
+    '
+  tags:
+  - sft
+  - label-mask
+  related:
+  - SFT 监督微调
+  - Label Mask
+- id: pre-003
+  difficulty: medium
+  type: single
+  question: PPO 强化学习训练时，显存里同时有几个模型？
+  options:
+  - A. 2 个（Actor + Critic）
+  - B. 3 个（Actor + Critic + RM）
+  - C. 4 个（Actor + Critic + RM + Reference）
+  - D. 1 个（Actor 兼任所有角色）
+  answer: C
+  explanation: 'PPO 四模型：
+
+    1. Actor（训练中，生成回答）
+
+    2. Critic（训练中，估计 V(s)，算 Advantage）
+
+    3. Reward Model（冻结，给回答打分）
+
+    4. Reference Model（冻结，算 KL 散度防漂移）
+
+    2 个训练 + 2 个冻结。
+
+    '
+  tags:
+  - ppo
+  - rlhf
+  related:
+  - PPO 四模型
+- id: pre-004
+  difficulty: medium
+  type: single
+  question: DPO 和 PPO 的核心区别是什么？
+  options:
+  - A. DPO 效果更好但更复杂
+  - B. DPO 把奖励模型隐式消解在损失函数里，不需要显式 RL 循环
+  - C. DPO 需要更多显存
+  - D. DPO 只能用于图像任务
+  answer: B
+  explanation: 'PPO：SFT → 训练 RM → PPO 强化学习（显式 RL 循环，4 个模型）
+
+    DPO：直接在偏好数据上做监督学习，奖励模型被隐式消解在损失函数里。
+
+    DPO 更简单、更稳定、显存更低，但受限于离线数据（不能在线探索）。
+
+    '
+  tags:
+  - dpo
+  - ppo
+  - alignment
+  related:
+  - DPO vs PPO
+- id: pre-005
+  difficulty: easy
+  type: single
+  question: 预训练阶段的训练目标是什么？
+  options:
+  - A. 分类损失
+  - B. 下一词预测（Next Token Prediction）
+  - C. 对比学习损失
+  - D. 回归损失
+  answer: B
+  explanation: '预训练目标：Next Token Prediction（下一词预测）。
+
+    给前 N 个 token，预测第 N+1 个。
+
+    损失函数：交叉熵（Cross Entropy）。
+
+    评估指标：困惑度 PPL = exp(loss)，越低越好。
+
+    '
+  tags:
+  - pretrain
+  - next-token-prediction
+  related:
+  - 预训练目标
+- id: pre-006
+  difficulty: hard
+  type: single
+  question: GRPO（Group Relative Policy Optimization）和 PPO 的主要区别是什么？
+  options:
+  - A. GRPO 用组内平均奖励代替 Critic，省显存且更稳定
+  - B. GRPO 训练更慢但效果更好
+  - C. GRPO 需要更多模型
+  - D. GRPO 只能用于文本生成
+  answer: A
+  explanation: 'GRPO 核心：用组内相对奖励代替 Critic。
+
+    同一道题采样 G 个答案，A_i = (r_i - mean(r)) / std(r)，比平均分高的就是好答案。
+
+    优势：不需要 Critic → 省 25% 显存 + 避免 Critic 训练不稳定。
+
+    适用：可验证奖励（数学题、代码，答案对不对有客观标准）。
+
+    '
+  tags:
+  - grpo
+  - rl
+  - alignment
+  related:
+  - GRPO 组相对策略优化
+- id: pre-007
+  difficulty: medium
+  type: single
+  question: LoRA（Low-Rank Adaptation）微调的原理是什么？
+  options:
+  - A. 直接修改原始权重 W
+  - B. 在原始权重旁加两个低秩矩阵 A 和 B，训练只更新 A×B
+  - C. 只训练偏置项
+  - D. 把模型剪枝后再微调
+  answer: B
+  explanation: 'LoRA 原理：不直接改原始权重 W，而是加两个小矩阵 A 和 B：W + A×B
+
+    A 随机初始化，B 初始化为 0（初始时不影响输出）。
+
+    训练时只更新 A 和 B，原始 W 冻结。
+
+    可训练参数通常 0.1%~1%，显存省 90%+，推理时可合并回 W 零延迟。
+
+    '
+  tags:
+  - lora
+  - finetune
+  - parameter-efficient
+  related:
+  - LoRA 低秩适配
+- id: pre-008
+  difficulty: medium
+  type: single
+  question: 为什么 RLHF 中要有 KL 散度惩罚？
+  options:
+  - A. 让模型生成更快
+  - B. 防止模型为了拿高分而跑偏太远，保持在 SFT 模型附近
+  - C. 减少参数量
+  - D. 提高训练稳定性
+  answer: B
+  explanation: '奖励公式：reward = r - β·KL
+
+    KL 散度衡量「当前策略模型」和「参考模型（SFT）」的差异。
+
+    没有 KL 惩罚的话，模型可能为了讨好奖励模型而生成奇怪的文本（奖励黑客）。
+
+    KL 惩罚保证模型在 SFT 基础上微调，不会跑偏太远。
+
+    '
+  tags:
+  - rlhf
+  - ppo
+  - kl-divergence
+  related:
+  - KL 散度惩罚
+  - 奖励黑客
+- id: pre-009
+  difficulty: easy
+  type: single
+  question: 关于 Scaling Law（缩放定律），以下哪个说法是正确的？
+  options:
+  - A. 模型越大一定越好，没有上限
+  - B. 性能和参数量、数据量、算力大致呈幂律关系
+  - C. Scaling Law 只适用于视觉模型
+  - D. 数据量对性能没有影响
+  answer: B
+  explanation: 'Scaling Law：性能 ∝ 参数量^α × 数据量^β × 算力^γ
+
+    大致是幂律关系，越大越强，可预测。
+
+    但不是所有能力都遵循——有些能力是涌现的（过了阈值突然会）。
+
+    '
+  tags:
+  - scaling-law
+  - pretrain
+  related:
+  - 缩放定律
+  - 涌现能力
+- id: pre-010
+  difficulty: hard
+  type: single
+  question: 分布式训练中，数据并行（DP）、张量并行（TP）、流水线并行（PP）的主要区别是什么？
+  options:
+  - A. DP 切数据，TP 切矩阵，PP 切层
+  - B. DP 切层，TP 切数据，PP 切矩阵
+  - C. 三者都是一回事，只是名字不同
+  - D. DP 最快，PP 最省显存
+  answer: A
+  explanation: 'DP（数据并行）：每张卡有完整模型，数据分片，AllReduce 同步梯度。
+
+    TP（张量并行）：把矩阵乘法切开，每张卡算一部分，通信量大。
+
+    PP（流水线并行）：把模型分层，不同卡负责不同层，像流水线一样。
+
+    三者结合 = 3D 并行，是训练大模型的标准做法。
+
+    '
+  tags:
+  - distributed-training
+  - data-parallel
+  - tensor-parallel
+  - pipeline-parallel
+  related:
+  - 3D 并行
+  - 分布式训练
+- id: pre-boss-1
+  difficulty: hard
+  type: open
+  question: 请比较 PPO、DPO、GRPO 三种对齐方法的核心区别，说明各自的优缺点和适用场景。
+  answer:
+  - PPO需要四个模型 Actor Critic RM Reference
+  - DPO把奖励模型隐式消解在损失函数里
+  - GRPO用组内相对奖励代替Critic
+  - PPO最复杂显存最大但可以在线探索
+  - DPO最简单稳定但受限于离线数据
+  - GRPO省显存适合可验证奖励如数学代码
+  - KL散度惩罚防止模型跑偏
+  explanation: PPO：4个模型，显式RL循环，可在线探索但复杂不稳定；DPO：直接偏好优化，奖励模型隐式消解，简单稳定但离线；GRPO：组相对策略优化，用组内平均奖励代替Critic，省显存，适合可验证奖励任务。
+  tags:
+  - rlhf
+  - ppo
+  - dpo
+  - grpo
+  - boss
+  min_keywords: 3

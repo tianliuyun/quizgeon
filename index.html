@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quizgeon · 题牢</title>
+  <link rel="stylesheet" href="src/css/game.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 开始界面 -->
+    <div id="start-screen" class="screen active">
+      <div class="title-box">
+        <h1 class="game-title">题 牢</h1>
+        <p class="subtitle">Quizgeon · 肉鸽式刷题地牢</p>
+      </div>
+      <div class="menu">
+        <button id="btn-continue" class="btn-primary" style="display:none;">⏩ 继续游戏</button>
+        <button id="btn-start" class="btn-primary">⚔️ 新游戏</button>
+        <div class="mode-selector">
+          <div class="mode-label">🎮 模式选择</div>
+          <div class="mode-options">
+            <button class="mode-btn active" data-mode="standard">标准模式</button>
+            <button class="mode-btn" data-mode="learning">学习模式</button>
+          </div>
+        </div>
+        <button id="btn-codex" class="btn-secondary">📖 知识点图鉴</button>
+        <button id="btn-stats" class="btn-secondary">📊 统计</button>
+      </div>
+      <p class="tip">答错的题会追着你打，直到你记住它。</p>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div id="game-screen" class="screen">
+      <!-- 顶部状态栏 -->
+      <div class="status-bar">
+        <div class="hp-section">
+          <span class="label">❤️ HP</span>
+          <div class="hp-bar">
+            <div class="hp-fill" id="hp-fill"></div>
+            <span class="hp-text" id="hp-text">100/100</span>
+          </div>
+        </div>
+        <div class="info-section">
+          <span class="gold">💰 <span id="gold-text">0</span></span>
+          <span class="floor">🏰 第 <span id="floor-text">1</span> 层</span>
+          <span class="room">🚪 <span id="room-text">1</span>/10</span>
+          <button id="btn-sound" class="sound-toggle" title="音效开关">🔊</button>
+          <button id="btn-menu" class="sound-toggle" title="返回主菜单">☰</button>
+        </div>
+      </div>
+
+      <!-- 战斗区 -->
+      <div class="battle-area">
+        <div class="monster-box" id="monster-box">
+          <div class="monster-emoji" id="monster-emoji">👾</div>
+          <div class="monster-name" id="monster-name">注意力小怪</div>
+          <div class="monster-type" id="monster-type">普通</div>
+        </div>
+
+        <div class="question-box">
+          <div class="question-text" id="question-text">
+            题目加载中...
+          </div>
+          <div class="options" id="options-container">
+            <!-- 选项动态生成 -->
+          </div>
+        </div>
+
+        <!-- 反馈区（答题后显示） -->
+        <div class="feedback-box" id="feedback-box" style="display:none;">
+          <div class="feedback-title" id="feedback-title"></div>
+          <div class="feedback-explanation" id="feedback-explanation"></div>
+          <button id="btn-next" class="btn-primary">继续 →</button>
+        </div>
+      </div>
+
+      <!-- 遗物栏 -->
+      <div class="relic-bar" id="relic-bar">
+        <span class="relics-label">遗物：</span>
+        <span id="relics-list">无</span>
+      </div>
+    </div>
+
+    <!-- 图鉴界面 -->
+    <div id="codex-screen" class="screen">
+      <div class="codex-header">
+        <h2>📖 知识点图鉴</h2>
+        <button id="btn-codex-back" class="btn-secondary">← 返回</button>
+      </div>
+      <div class="codex-content" id="codex-content">
+        <p class="empty-tip">还没有解锁任何知识点，去地牢里打怪吧！</p>
+      </div>
+    </div>
+
+    <!-- 统计界面 -->
+    <div id="stats-screen" class="screen">
+      <div class="stats-header">
+        <h2>📊 统计</h2>
+        <button id="btn-stats-back" class="btn-secondary">← 返回</button>
+      </div>
+      <div class="stats-content" id="stats-content"></div>
+    </div>
+
+    <!-- 游戏结束界面 -->
+    <div id="gameover-screen" class="screen">
+      <div class="gameover-box">
+        <h2 id="gameover-title">你倒在了第 1 层...</h2>
+        <div class="gameover-stats" id="gameover-stats"></div>
+        <div class="gameover-rewards" id="gameover-rewards"></div>
+        <button id="btn-retry" class="btn-primary">🔄 再来一次</button>
+        <button id="btn-back-menu" class="btn-secondary">返回主菜单</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/js/data/questions.js"></script>
+  <script src="src/js/data/saveSystem.js"></script>
+  <script src="src/js/game/player.js"></script>
+  <script src="src/js/game/dungeon.js"></script>
+  <script src="src/js/game/combat.js"></script>
+  <script src="src/js/game/shop.js"></script>
+  <script src="src/js/game/sound.js"></script>
+  <script src="src/js/main.js"></script>
+</body>
+</html>

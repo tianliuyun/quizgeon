@@ -1,0 +1,253 @@
+- id: trans-001
+  difficulty: easy
+  type: single
+  question: Self-Attention 的计算公式是什么？
+  options:
+  - A. softmax(QKᵀ) · V
+  - B. softmax(QKᵀ/√dₖ) · V
+  - C. sigmoid(QKᵀ/√dₖ) · V
+  - D. softmax(QVᵀ/√dₖ) · K
+  answer: B
+  explanation: '自注意力公式：Attention(Q, K, V) = softmax(QKᵀ/√dₖ) · V。
+
+    除以 √dₖ 是缩放因子，防止点积过大导致 softmax 饱和。
+
+    '
+  tags:
+  - transformer
+  - attention
+  related:
+  - 自注意力公式
+  - 缩放点积注意力
+- id: trans-002
+  difficulty: easy
+  type: single
+  question: Transformer 中，Multi-Head Attention 的「多头」主要作用是什么？
+  options:
+  - A. 减少参数量，加快计算
+  - B. 在不同子空间学习不同类型的依赖关系
+  - C. 让序列长度可以任意扩展
+  - D. 替代残差连接的作用
+  answer: B
+  explanation: '多头注意力让模型在不同的表示子空间里同时关注不同类型的依赖关系。
+
+    比如有的头关注句法依存，有的关注指代关系，有的关注远距离关联。
+
+    多头不增加总参数量（d_model 拆成 h 个头，每个头 d_k = d_model/h）。
+
+    '
+  tags:
+  - transformer
+  - multi-head attention
+  related:
+  - 多头注意力
+- id: trans-003
+  difficulty: easy
+  type: single
+  question: 为什么 NLP 中通常用 LayerNorm 而不用 BatchNorm？
+  options:
+  - A. LayerNorm 计算更快
+  - B. NLP 序列长度不一且 batch 通常小，BN 统计量不准
+  - C. BatchNorm 不能用在 GPU 上
+  - D. LayerNorm 的参数更多
+  answer: B
+  explanation: 'BN 在 batch 维度归一化，但 NLP 中：
+
+    1. 序列长度不一，padding 多，统计量不准；
+
+    2. batch size 通常小（受显存限制），BN 不稳定。
+
+    LN 对每个样本独立归一化，不受 batch size 和序列长度影响。
+
+    '
+  tags:
+  - transformer
+  - layer-norm
+  - batch-norm
+  related:
+  - LayerNorm vs BatchNorm
+- id: trans-004
+  difficulty: medium
+  type: single
+  question: Pre-LN 和 Post-LN 的主要区别是什么？
+  options:
+  - A. Pre-LN 在残差前做 LN，训练更稳定，深层模型都用它
+  - B. Post-LN 在残差前做 LN，效果更好
+  - C. Pre-LN 是原始论文用的结构
+  - D. 两者完全等价，只是实现不同
+  answer: A
+  explanation: 'Post-LN（原始论文）：Attention → 残差 → LN → FFN → 残差 → LN
+
+    Pre-LN（现代主流）：LN → Attention → 残差 → LN → FFN → 残差
+
+    Pre-LN 训练更稳定，不需要 warmup，深层模型都用 Pre-LN。
+
+    '
+  tags:
+  - transformer
+  - pre-ln
+  - post-ln
+  related:
+  - Pre-LN vs Post-LN
+- id: trans-005
+  difficulty: easy
+  type: single
+  question: 残差连接主要解决什么问题？
+  options:
+  - A. 提高模型参数量
+  - B. 解决梯度消失，让深层网络可训练
+  - C. 加快推理速度
+  - D. 减少过拟合
+  answer: B
+  explanation: '残差连接 y = x + f(x)，反向传播时梯度变成 1 + ∂f/∂x，
+
+    至少有 1 的梯度保底，不会消失。这样才能堆几十上百层。
+
+    Transformer 每层有两个残差（Attention 后 + FFN 后）。
+
+    '
+  tags:
+  - transformer
+  - residual
+  related:
+  - 残差连接
+- id: trans-006
+  difficulty: medium
+  type: single
+  question: Encoder-only / Decoder-only / Encoder-Decoder 三种架构，哪个是当前大模型的主流？
+  options:
+  - A. Encoder-only（BERT 系）
+  - B. Decoder-only（GPT 系）
+  - C. Encoder-Decoder（T5 系）
+  - D. 三者旗鼓相当
+  answer: B
+  explanation: '现在大模型主流是 Decoder-only（GPT/Llama/Qwen 都是）。
+
+    原因：生成是核心能力，单向因果注意力天然适合自回归生成；
+
+    统一架构能同时做理解和生成（prompt 形式），扩展性更强。
+
+    Encoder-only 擅长理解（分类/NER），不适合生成。
+
+    '
+  tags:
+  - transformer
+  - architecture
+  related:
+  - 三种架构对比
+- id: trans-007
+  difficulty: medium
+  type: single
+  question: Self-Attention 为什么要除以 √dₖ？
+  options:
+  - A. 让 QKᵀ 的值变小，节省显存
+  - B. 防止点积过大导致 softmax 饱和、梯度消失
+  - C. 让每个头的参数量一致
+  - D. 归一化到 0~1 之间
+  answer: B
+  explanation: '当 dₖ 很大时，QKᵀ 的点积值会很大（均值 0，方差 dₖ）。
+
+    点积过大 → softmax 输入两极分化 → 输出趋近 one-hot → 梯度接近 0（饱和）。
+
+    除以 √dₖ 后，点积方差变回 1，softmax 梯度更稳定。
+
+    例：dₖ=64 时，点积标准差 8；除以 8 后标准差 1。
+
+    '
+  tags:
+  - transformer
+  - attention
+  - scaling
+  related:
+  - 缩放点积注意力
+  - 梯度消失
+- id: trans-008
+  difficulty: easy
+  type: single
+  question: Transformer 中的 FFN（Feed-Forward Network）是什么结构？
+  options:
+  - A. 一层线性层
+  - B. 两层线性层 + 激活，d_model → 4×d_model → d_model
+  - C. 卷积层
+  - D. 循环神经网络
+  answer: B
+  explanation: 'FFN = 两层线性变换 + GELU 激活，中间维度是 4×d_model。
+
+    作用：升维提供丰富的特征空间，每个 token 独立做非线性变换。
+
+    Attention 负责 token 之间的信息交互，FFN 负责 token 内部的特征加工。
+
+    '
+  tags:
+  - transformer
+  - ffn
+  related:
+  - FFN 前馈网络
+- id: trans-009
+  difficulty: hard
+  type: single
+  question: 以下哪种位置编码支持长度外推（训练时短，推理时长）？
+  options:
+  - A. 正弦位置编码（原始论文）
+  - B. 可学习位置编码（BERT/GPT）
+  - C. RoPE（旋转位置编码）
+  - D. 以上都不支持
+  answer: C
+  explanation: 'RoPE（旋转位置编码，LLaMA/Qwen 主流）：在 Q/K 上做旋转变换注入位置信息。
+
+    特点：相对位置编码，支持长度外推，推理时可以比训练时长很多。
+
+    可学习位置编码不能外推（没学过的位置就乱了）。
+
+    正弦位置编码理论上可以外推，但实际效果不如 RoPE。
+
+    '
+  tags:
+  - transformer
+  - position-encoding
+  - RoPE
+  related:
+  - 位置编码
+  - RoPE 旋转位置编码
+- id: trans-010
+  difficulty: medium
+  type: single
+  question: Transformer 自注意力的计算复杂度是多少？（L = 序列长度，d = 维度）
+  options:
+  - A. O(L·d)
+  - B. O(L²·d)
+  - C. O(L·d²)
+  - D. O(L²·d²)
+  answer: B
+  explanation: '自注意力复杂度 = QKᵀ 矩阵乘法（L×d × d×L = L²×d）+ 乘以 V（L×L × L×d = L²×d）。
+
+    主要瓶颈是 L² 项，序列越长越慢。
+
+    优化方向：稀疏注意力（滑动窗口）、线性注意力、MQA/GQA（减少 KV 计算量）。
+
+    '
+  tags:
+  - transformer
+  - attention
+  - complexity
+  related:
+  - 注意力复杂度
+- id: trans-boss-1
+  difficulty: hard
+  type: open
+  question: 请简述 Transformer 中 Self-Attention 的完整计算过程，并解释为什么要除以 √dₖ。
+  answer:
+  - 计算 Q、K、V 三个矩阵，通过线性投影得到
+  - 计算注意力分数 QK^T
+  - 除以√d_k进行缩放
+  - softmax归一化得到注意力权重
+  - 乘以V得到输出
+  - 防止点积过大导致softmax饱和梯度消失
+  - 缩放点积注意力
+  explanation: Self-Attention 五步：1) 线性投影得到 Q/K/V；2) Q·Kᵀ 计算注意力分数；3) 除以 √dₖ 缩放（防止点积过大导致
+    softmax 饱和，梯度消失）；4) softmax 归一化得到权重；5) 加权求和 V 得到输出。
+  tags:
+  - transformer
+  - attention
+  - boss
+  min_keywords: 3
