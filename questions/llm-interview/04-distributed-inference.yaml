@@ -1,0 +1,245 @@
+- id: dist-001
+  difficulty: easy
+  type: single
+  question: 数据并行（Data Parallelism）的核心思想是什么？
+  options:
+  - A. 每张卡放完整模型，数据分片，AllReduce同步梯度
+  - B. 把模型切成多块，每张卡算一部分
+  - C. 把数据分批，一张卡跑一批
+  - D. 把训练数据存在不同的地方
+  answer: A
+  explanation: '数据并行：每张卡都有完整模型副本，数据分成N份，每张卡算自己那份的梯度，然后通过 AllReduce 同步所有卡的梯度，再各自更新权重。
+
+    优点：实现简单；缺点：每张卡都要存完整模型，大模型装不下。'
+  tags:
+  - distributed
+  - data-parallel
+  related:
+  - 数据并行
+  - AllReduce
+- id: dist-002
+  difficulty: medium
+  type: single
+  question: 张量并行（Tensor Parallelism）是怎么工作的？
+  options:
+  - A. 把数据切成多份
+  - B. 把单个大矩阵乘法切开，每张卡算一部分
+  - C. 把模型按层切开
+  - D. 把优化器状态分开存
+  answer: B
+  explanation: '张量并行：把矩阵乘法 Y = XA 切开，A 按列/行分块，每张卡算部分结果，最后 AllReduce/AllGather 拼起来。
+
+    特点：通信量大（每层都要通信），适合单卡装不下的大层。
+
+    代表：Megatron-LM。'
+  tags:
+  - distributed
+  - tensor-parallel
+  related:
+  - 张量并行
+  - Megatron-LM
+- id: dist-003
+  difficulty: medium
+  type: single
+  question: 流水线并行（Pipeline Parallelism）的核心思想是什么？
+  options:
+  - A. 把模型按层切分到不同卡，像流水线一样依次计算
+  - B. 数据一批一批送进来
+  - C. 把矩阵乘法并行化
+  - D. 优化器和模型分开存
+  answer: A
+  explanation: '流水线并行：模型按层切分，不同卡负责不同层。
+
+    输入像流水线一样依次经过各卡，中间插入微批（micro-batch）来减少气泡。
+
+    优点：省显存（每张卡只存部分层）；缺点：有气泡（bubble）浪费算力。
+
+    代表：GPipe、PipeDream。'
+  tags:
+  - distributed
+  - pipeline-parallel
+  related:
+  - 流水线并行
+  - GPipe
+- id: dist-004
+  difficulty: hard
+  type: single
+  question: ZeRO（Zero Redundancy Optimizer）主要优化什么？
+  options:
+  - A. 模型参数的存储冗余
+  - B. 训练数据的冗余
+  - C. 推理时的延迟
+  - D. 梯度计算的精度
+  answer: A
+  explanation: 'ZeRO 优化数据并行中的显存冗余：数据并行每张卡都存完整的模型参数+梯度+优化器状态，太浪费。
+
+    ZeRO-1：分片优化器状态；ZeRO-2：+分片梯度；ZeRO-3：+分片参数。
+
+    效果：显存省 N 倍（N=卡数），训练更大模型。代表：DeepSpeed。'
+  tags:
+  - distributed
+  - zero
+  - deepspeed
+  related:
+  - ZeRO
+  - DeepSpeed
+- id: dist-005
+  difficulty: easy
+  type: single
+  question: 3D 并行指的是哪三种并行方式的组合？
+  options:
+  - A. 数据并行 + 张量并行 + 流水线并行
+  - B. 数据并行 + 模型并行 + 优化器并行
+  - C. 前向并行 + 反向并行 + 更新并行
+  - D. CPU并行 + GPU并行 + NPU并行
+  answer: A
+  explanation: '3D 并行 = 数据并行（DP）+ 张量并行（TP）+ 流水线并行（PP）。
+
+    三种并行各有优劣，组合使用效果最好：
+
+    DP 省计算，TP 省单卡显存，PP 省总显存。
+
+    大模型训练标配，比如 GPT-3 训练就是 3D 并行。'
+  tags:
+  - distributed
+  - 3d-parallel
+  related:
+  - 3D 并行
+- id: dist-006
+  difficulty: medium
+  type: single
+  question: 推理加速中，vLLM 的核心技术 PagedAttention 解决了什么问题？
+  options:
+  - A. 显存碎片和 KV Cache 管理低效
+  - B. 模型精度不够
+  - C. 输入序列太长
+  - D. 输出质量不稳定
+  answer: A
+  explanation: 'PagedAttention 借鉴操作系统虚拟内存的思路，把 KV Cache 分成固定大小的块（页），用页表管理。
+
+    解决了：1) 连续显存浪费（不同请求长度不一产生碎片）；2) 批量调度不灵活。
+
+    效果：吞吐量提升 2-4 倍，几乎零成本。'
+  tags:
+  - inference
+  - vllm
+  - paged-attention
+  related:
+  - vLLM
+  - PagedAttention
+- id: dist-007
+  difficulty: medium
+  type: single
+  question: 关于模型量化，以下哪种说法是正确的？
+  options:
+  - A. 量化就是把模型压缩成zip文件
+  - B. 4bit 量化显存大约是 FP16 的 1/4，推理也更快
+  - C. 量化一定会让效果大幅下降
+  - D. 只有 GGUF 格式才能量化
+  answer: B
+  explanation: '量化：用更低精度（如 8bit/4bit）存储权重和计算。
+
+    4bit vs FP16：显存约 1/4，推理更快（计算量少+访存少）。
+
+    好的量化方法（AWQ/GPTQ/Q4_K_M）质量下降很小，感知不明显。
+
+    GGUF 是一种格式，不是量化方法本身。'
+  tags:
+  - inference
+  - quantization
+  related:
+  - 模型量化
+- id: dist-008
+  difficulty: hard
+  type: single
+  question: FlashAttention 主要通过什么方式加速注意力计算？
+  options:
+  - A. 减少注意力头的数量
+  - B. 用更快的 GPU
+  - C. 分块计算 + 重计算，减少 HBM 访存
+  - D. 用稀疏注意力代替稠密注意力
+  answer: C
+  explanation: 'FlashAttention 核心思想：IO 感知的注意力计算。
+
+    把 Q/K/V 分块，一块一块算，存在 SRAM 里，最后写回 HBM。
+
+    虽然有重计算（recomputation），但因为减少了大量 HBM 读写（速度慢），整体反而快 2~4 倍。
+
+    现在是大模型训练推理的标配。'
+  tags:
+  - inference
+  - flash-attention
+  - optimization
+  related:
+  - FlashAttention
+- id: dist-009
+  difficulty: easy
+  type: single
+  question: 推理时的「Batch」和「Context」分别指什么？
+  options:
+  - A. Batch=一次处理几个请求，Context=输入prompt长度
+  - B. Batch=模型批次，Context=上下文窗口
+  - C. Batch=批量生成，Context=对话历史
+  - D. 都是一个意思
+  answer: A
+  explanation: 'Batch（批大小）：一次同时处理多少个请求，影响吞吐量。
+
+    Context（上下文长度）：输入 prompt 的 token 数，影响预填充阶段耗时。
+
+    推理两个重要指标：吞吐量（tokens/s）和延迟（首 token 时间）。
+
+    二者通常是 trade-off 关系。'
+  tags:
+  - inference
+  - batch
+  - latency
+  related:
+  - 推理基础
+- id: dist-010
+  difficulty: medium
+  type: single
+  question: AllReduce 和 AllGather 的区别是什么？
+  options:
+  - A. AllReduce 是求和，AllGather 是拼接
+  - B. AllReduce 更快
+  - C. AllGather 只在一张卡上用
+  - D. 两者是同一个东西的不同名字
+  answer: A
+  explanation: 'AllReduce：每张卡都有一份数据，操作后每张卡都得到归约结果（比如求和/平均）。用于数据并行同步梯度。
+
+    AllGather：每张卡有一部分数据，操作后每张卡都拿到所有卡的数据拼接结果。用于张量并行的结果合并。
+
+    都是集合通信原语，NCCL 实现。'
+  tags:
+  - distributed
+  - allreduce
+  - allgather
+  related:
+  - 集合通信
+  - NCCL
+- id: dist-boss-1
+  difficulty: hard
+  type: open
+  question: 请简述 3D 并行（数据并行/张量并行/流水线并行）各自的原理、优缺点，以及为什么大模型训练需要三者结合。
+  answer:
+  - 数据并行每张卡完整模型数据分片AllReduce同步梯度
+  - 张量并行把矩阵乘法切开每张卡算一部分通信量大
+  - 流水线并行按层切分微批减少气泡节省显存
+  - 数据并行实现简单但每张卡都要存完整模型
+  - 张量并行通信量大适合单卡装不下的大层
+  - 流水线并行有气泡bubble浪费算力
+  - 三者结合3D并行显存和计算都最优训练大模型
+  - ZeRO优化数据并行的显存冗余优化器状态分片
+  - 大模型参数量太大单卡装不下必须多种并行结合
+  explanation: '数据并行（DP）：每张卡完整模型，数据分片，AllReduce 同步梯度。实现简单，但每张卡要存完整模型+梯度+优化器状态，大模型装不下。
+
+    张量并行（TP）：把大矩阵乘法切开，每层都通信。通信量大，适合超大层。
+
+    流水线并行（PP）：按层切分，微批流水。有气泡（bubble）浪费算力，但显存省得多。
+
+    三者结合 = 3D 并行，各取所长，是训练百亿千亿大模型的标配。'
+  tags:
+  - distributed
+  - 3d-parallel
+  - boss
+  min_keywords: 4
