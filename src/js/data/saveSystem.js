@@ -72,7 +72,14 @@ const SaveSystem = {
         achievements: {},
         stats: {
           bestRun: null,
-          daily: {}
+          daily: {},
+          bestStreak: 0,
+          mostGold: 0,
+          bossesKilled: 0,
+          relicsCollected: {},
+          nearDeathSaves: 0,
+          phoenixRevives: 0,
+          hardMaxFloor: 0
         }
       },
       current: null

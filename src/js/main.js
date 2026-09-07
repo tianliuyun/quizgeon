@@ -618,6 +618,7 @@ const Game = {
     takeBtn.style.width = '100%';
     takeBtn.addEventListener('click', () => {
       Relics.applyRelic(this.player, relic);
+      this.recordRelicCollected(relic.id);
       Sound.coin();
       this.updateStatusBar();
       this.updateItemBar();
@@ -626,6 +627,16 @@ const Game = {
       this.enterRoom();
     });
     optionsContainer.appendChild(takeBtn);
+  },
+
+  // 记录遗物收集
+  recordRelicCollected(relicId) {
+    const save = SaveSystem.load();
+    if (!save.permanent.stats) save.permanent.stats = {};
+    if (!save.permanent.stats.relicsCollected) save.permanent.stats.relicsCollected = {};
+    save.permanent.stats.relicsCollected[relicId] =
+      (save.permanent.stats.relicsCollected[relicId] || 0) + 1;
+    SaveSystem.save(save);
   },
 
   // 更新道具栏
@@ -908,6 +919,47 @@ const Game = {
     SaveSystem.addSoulShards(shards);
     SaveSystem.updateMaxFloor(this.player.floor - 1);
     SaveSystem.clearCurrent();
+
+    // 更新统计数据
+    const save = SaveSystem.load();
+    const stats = save.permanent.stats || {};
+
+    // 更新最佳连胜
+    if (this.player.bestStreak > (stats.bestStreak || 0)) {
+      stats.bestStreak = this.player.bestStreak;
+    }
+
+    // 更新最多金币
+    if (this.player.gold > (stats.mostGold || 0)) {
+      stats.mostGold = this.player.gold;
+    }
+
+    // 更新最佳记录
+    const currentBest = stats.bestRun;
+    if (!currentBest || this.player.correctThisRun > currentBest.correct) {
+      stats.bestRun = {
+        correct: this.player.correctThisRun,
+        wrong: this.player.wrongThisRun,
+        floor: this.player.floor,
+        date: new Date().toISOString().split('T')[0]
+      };
+    }
+
+    // 困难难度最高层
+    if (this.difficulty === 'hard' && this.player.floor > (stats.hardMaxFloor || 0)) {
+      stats.hardMaxFloor = this.player.floor;
+    }
+
+    save.permanent.stats = stats;
+    SaveSystem.save(save);
+
+    // 检查成就
+    if (typeof Achievements !== 'undefined') {
+      const newAchievements = Achievements.checkAll();
+      newAchievements.forEach((ach, i) => {
+        setTimeout(() => Achievements.showUnlock(ach), i * 1500);
+      });
+    }
 
     let dailyMsg = '';
     if (this.isDailyChallenge && typeof DailyChallenge !== 'undefined') {

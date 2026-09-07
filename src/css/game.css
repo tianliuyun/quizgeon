@@ -429,6 +429,59 @@ body {
 .floating-text.gold { color: #f59e0b; }
 .floating-text.heal { color: #10b981; }
 
+/* 成就弹窗 */
+.achievement-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #7c3aed, #f59e0b);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.4);
+  z-index: 1000;
+  animation: achievement-pop 0.5s ease-out;
+  max-width: 280px;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+@keyframes achievement-pop {
+  0% { transform: translateX(400px); opacity: 0; }
+  70% { transform: translateX(-10px); }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+.ach-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.ach-info {
+  flex: 1;
+}
+
+.ach-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.ach-name {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.ach-desc {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
 /* 怪物区相对定位，用于飘字 */
 .monster-box { position: relative; }
 
