@@ -325,6 +325,42 @@ const Game = {
     optionsContainer.appendChild(startBtn);
   },
 
+  // 飘字效果
+  showFloatingText(text, type = 'damage') {
+    const monsterBox = document.querySelector('.monster-box');
+    if (!monsterBox) return;
+
+    const el = document.createElement('div');
+    el.className = `floating-text ${type}`;
+    el.textContent = text;
+    // 随机水平偏移
+    const offset = (Math.random() - 0.5) * 60;
+    el.style.left = `calc(50% + ${offset}px)`;
+    monsterBox.appendChild(el);
+
+    setTimeout(() => el.remove(), 1000);
+  },
+
+  // 屏幕震动
+  shakeScreen() {
+    const battle = document.querySelector('.battle-area');
+    if (!battle) return;
+    battle.classList.remove('shake');
+    void battle.offsetWidth;  // 触发重排以重启动画
+    battle.classList.add('shake');
+    setTimeout(() => battle.classList.remove('shake'), 400);
+  },
+
+  // 怪物受击
+  hitMonster() {
+    const emoji = document.getElementById('monster-emoji');
+    if (!emoji) return;
+    emoji.classList.remove('monster-hit');
+    void emoji.offsetWidth;
+    emoji.classList.add('monster-hit');
+    setTimeout(() => emoji.classList.remove('monster-hit'), 300);
+  },
+
   // 处理答题结果
   handleAnswer(question, answer) {
     let isCorrect;
@@ -344,7 +380,6 @@ const Game = {
       // 职业金币加成
       if (typeof Classes !== 'undefined') {
         gold = Math.floor(gold * Classes.getBonus(this.player, 'goldMult'));
-        // 盗贼连击加成
         const streakBonus = Classes.getBonus(this.player, 'streakBonus');
         if (streakBonus > 0) {
           gold = Math.floor(gold * (1 + this.player.streak * streakBonus));
@@ -353,29 +388,33 @@ const Game = {
       Player.addGold(this.player, gold);
       Player.onCorrect(this.player);
       Sound.correct();
+      this.hitMonster();
+      this.showFloatingText(`+${gold}`, 'gold');
       // 吸血遗物
       if (typeof Relics !== 'undefined') {
         const vampire = this.player.relics?.find(r => r.id === 'vampireFangs');
         if (vampire) {
-          Player.heal(this.player, vampire.effect.value);
+          const healed = Player.heal(this.player, vampire.effect.value);
+          if (healed > 0) this.showFloatingText(`+${healed}`, 'heal');
         }
       }
     } else {
       let damage = Combat.calcDamage(question);
-      // 伤害减免（遗物）
       if (typeof Relics !== 'undefined') {
         damage = Math.floor(damage * Relics.getDamageMultiplier(this.player));
       }
-      // 职业伤害减免
       if (typeof Classes !== 'undefined') {
         const dmgReduce = Classes.getBonus(this.player, 'damageReduce');
         if (dmgReduce > 0) damage = Math.floor(damage * (1 - dmgReduce));
       }
       const dead = Player.takeDamage(this.player, damage);
-      // 凤凰羽毛复活
       if (dead && typeof Relics !== 'undefined' && Relics.canRevive(this.player)) {
         Relics.doRevive(this.player);
         Sound.victory();
+        this.showFloatingText('复活！', 'heal');
+      } else {
+        this.shakeScreen();
+        this.showFloatingText(`-${damage}`, 'damage');
       }
       Player.onWrong(this.player);
       Sound.hurt();

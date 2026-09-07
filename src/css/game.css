@@ -318,6 +318,72 @@ body {
   50% { transform: translateY(-8px); }
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(124, 58, 237, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(124, 58, 237, 0.6); }
+}
+
+@keyframes damage-float {
+  0% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -50px); }
+}
+
+@keyframes gold-float {
+  0% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -40px); }
+}
+
+@keyframes monster-hit {
+  0%, 100% { transform: translateX(0); filter: brightness(1); }
+  25% { transform: translateX(8px); filter: brightness(2); }
+  75% { transform: translateX(-4px); filter: brightness(1.5); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.shake { animation: shake 0.4s ease; }
+.monster-hit { animation: monster-hit 0.3s ease; }
+.gold-float { animation: gold-float 1s ease-out forwards; }
+.damage-float { animation: damage-float 1s ease-out forwards; }
+.pop-in { animation: pop-in 0.3s ease-out; }
+.slide-in-right { animation: slide-in-right 0.3s ease-out; }
+
+/* 飘字容器 */
+.floating-text {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  font-weight: bold;
+  font-size: 24px;
+  pointer-events: none;
+  z-index: 10;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.floating-text.damage { color: #ef4444; }
+.floating-text.gold { color: #f59e0b; }
+.floating-text.heal { color: #10b981; }
+
+/* 怪物区相对定位，用于飘字 */
+.monster-box { position: relative; }
+
 .monster-name {
   font-size: 18px;
   font-weight: bold;
