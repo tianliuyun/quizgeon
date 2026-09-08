@@ -192,6 +192,12 @@ const SaveSystem = {
     return this.save(save);
   },
 
+  // 获取升级等级
+  getUpgradeLevel(type) {
+    const save = this.load();
+    return save.permanent.upgrades[type] || 0;
+  },
+
   // 购买升级
   buyUpgrade(type) {
     const save = this.load();
