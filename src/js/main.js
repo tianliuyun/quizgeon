@@ -1188,6 +1188,26 @@ const Game = {
     const perm = SaveSystem.load().permanent;
     const total = perm.totalCorrect + perm.totalWrong;
     const accuracy = total > 0 ? (perm.totalCorrect / total * 100).toFixed(1) : 0;
+    const totalQuestions = window.QUESTION_BANK?.length || 0;
+    const codex = perm.codex || {};
+
+    // 计算掌握情况
+    let mastered = 0, learning = 0, weak = 0, unattempted = 0;
+    for (const q of (window.QUESTION_BANK || [])) {
+      const entry = codex[q.id];
+      if (!entry) { unattempted++; continue; }
+      const right = entry.rightCount || 0;
+      const wrong = entry.wrongCount || 0;
+      if (right >= 3 && right > wrong * 2) mastered++;
+      else if (right > wrong) learning++;
+      else weak++;
+    }
+    const completionRate = totalQuestions > 0 ? Math.round(((totalQuestions - unattempted) / totalQuestions) * 100) : 0;
+    const masteryRate = totalQuestions > 0 ? Math.round((mastered / totalQuestions) * 100) : 0;
+
+    const achievementsUnlocked = typeof Achievements !== 'undefined' ? Achievements.getUnlockedCount() : 0;
+    const achievementsTotal = typeof Achievements !== 'undefined' ? Achievements.getTotalCount() : 0;
+    const stats = perm.stats || {};
 
     const container = document.getElementById('stats-content');
     container.innerHTML = `
@@ -1208,13 +1228,82 @@ const Game = {
           <div class="stat-value">${accuracy}%</div>
           <div class="stat-label">正确率</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value">✨ ${perm.soulShards}</div>
-          <div class="stat-label">灵魂碎片</div>
+      </div>
+
+      <div class="stats-section">
+        <h3>📊 学习进度</h3>
+        <div class="progress-bar-container">
+          <div class="progress-label">
+            <span>完成度</span>
+            <span>${completionRate}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${completionRate}%"></div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value">${Object.keys(perm.codex).length}</div>
-          <div class="stat-label">知识点解锁</div>
+        <div class="progress-bar-container">
+          <div class="progress-label">
+            <span>掌握度</span>
+            <span>${masteryRate}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill success" style="width: ${masteryRate}%"></div>
+          </div>
+        </div>
+        <div class="mastery-grid">
+          <div class="mastery-item">
+            <span class="mastery-dot success"></span>
+            <span>已掌握 ${mastered}</span>
+          </div>
+          <div class="mastery-item">
+            <span class="mastery-dot info"></span>
+            <span>学习中 ${learning}</span>
+          </div>
+          <div class="mastery-item">
+            <span class="mastery-dot danger"></span>
+            <span>薄弱 ${weak}</span>
+          </div>
+          <div class="mastery-item">
+            <span class="mastery-dot muted"></span>
+            <span>未接触 ${unattempted}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <h3>🏆 最高记录</h3>
+        <div class="record-list">
+          <div class="record-item">
+            <span>最高连胜</span>
+            <strong>${stats.bestStreak || 0} 题</strong>
+          </div>
+          <div class="record-item">
+            <span>单局最多金币</span>
+            <strong>💰 ${stats.mostGold || 0}</strong>
+          </div>
+          <div class="record-item">
+            <span>最佳单局</span>
+            <strong>${stats.bestRun?.correct || 0} 对 / ${stats.bestRun?.wrong || 0} 错</strong>
+          </div>
+          <div class="record-item">
+            <span>击败 Boss</span>
+            <strong>🐉 ${stats.bossesKilled || 0} 只</strong>
+          </div>
+          <div class="record-item">
+            <span>成就解锁</span>
+            <strong>${achievementsUnlocked} / ${achievementsTotal}</strong>
+          </div>
+          <div class="record-item">
+            <span>灵魂碎片</span>
+            <strong>✨ ${perm.soulShards}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <h3>💡 学习建议</h3>
+        <div class="tip-box">
+          ${this.generateStudyTip(mastered, learning, weak, unattempted, parseFloat(accuracy))}
         </div>
       </div>
 
@@ -1240,6 +1329,17 @@ const Game = {
     `;
 
     this.showScreen('stats-screen');
+  },
+
+  // 生成学习建议
+  generateStudyTip(mastered, learning, weak, unattempted, accuracy) {
+    const total = mastered + learning + weak + unattempted;
+    if (total === 0) return '开始你的第一次冒险吧！答错也没关系，错题会反复出现帮你记忆。';
+    if (weak > mastered && weak > 10) return `你有 ${weak} 道薄弱题，建议开一把学习模式重点攻克它们。错题会在后续楼层加权出现，多刷几次就能记住！`;
+    if (accuracy > 85 && mastered > 10) return '掌握得不错！试试困难模式挑战自己，或者解锁更多题库扩展知识面。';
+    if (unattempted > total * 0.6) return '还有很多题目等着你探索！多玩几局，把题目都过一遍。';
+    if (learning > mastered) return '正处在快速上升期！继续保持，把学习中的题目变成已掌握。';
+    return '稳步前进中。每天来玩几题，间隔重复效果最好。';
   },
 
   // 购买永久升级
