@@ -190,6 +190,60 @@ quizgeon/
 
 ---
 
+
+## 🧪 测试
+
+```bash
+# JS 模块测试
+node tests/run.js
+
+# 题库构建测试
+python3 tests/test_build_questions.py
+```
+
+目前共 **62 个测试**（42 JS + 20 Python），全部通过。
+
+## 📦 题库构建
+
+题库用 YAML 编写，构建成 JS 供游戏使用：
+
+```bash
+# 构建所有题库
+python3 scripts/build-questions.py
+
+# 输出: src/js/data/questions.js
+```
+
+题库规范见 [docs/题库格式规范.md](docs/题库格式规范.md)。
+
+## 📱 PWA 支持
+
+Quizgeon 支持 PWA，可以：
+- 📲 添加到主屏幕，像 App 一样打开
+- 📴 离线也能玩（Service Worker 缓存）
+- 🚀 秒开（本地缓存）
+
+第一次在浏览器打开后，选择"添加到主屏幕"即可。
+
+## 🤝 贡献
+
+欢迎贡献！无论加题目、修 bug、提建议都可以。
+详情见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+**最受欢迎的贡献方式：加题目！** 题目越多，游戏越好玩。
+
+## 📊 项目统计
+
+- **44 道** 大模型面试题（4 层）
+- **42 道** 前端基础题（持续增加中）
+- **2 个** 题库（可扩展）
+- **16 个** 成就
+- **8 个** 遗物
+- **4 个** 职业
+- **4 个** 主题
+- **62 个** 测试用例
+- **0** 个依赖
+
 ## 📄 许可
 
 MIT License — 随便用，欢迎改。
