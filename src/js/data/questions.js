@@ -1,10 +1,11 @@
 // 题库注册中心（由 build 脚本自动生成）
+// 请不要手动修改此文件，修改 questions/ 下的 YAML 源文件后重新构建
 window.QUESTION_BANKS = {
   "frontend-basics": {
     "id": "frontend-basics",
     "name": "前端基础",
     "emoji": "🎨",
-    "description": "前端入门基础题，适合新手",
+    "description": "前端入门基础题，适合新手热身",
     "questionCount": 5,
     "questions": [
       {
@@ -62,7 +63,7 @@ window.QUESTION_BANKS = {
           "javascript",
           "closure"
         ],
-        "floor": 1
+        "floor": 2
       },
       {
         "id": "fe-004",
@@ -82,7 +83,7 @@ window.QUESTION_BANKS = {
           "hooks",
           "useeffect"
         ],
-        "floor": 1
+        "floor": 2
       },
       {
         "id": "fe-005",
@@ -109,8 +110,8 @@ window.QUESTION_BANKS = {
   "llm-interview": {
     "id": "llm-interview",
     "name": "大模型面试",
-    "emoji": "🤖",
-    "description": "大模型算法岗面试题，4 层地牢",
+    "emoji": "🧠",
+    "description": "大模型工程师面试题库，覆盖 Transformer / 预训练 / SFT / RAG / Agent / 推理优化",
     "questionCount": 44,
     "questions": [
       {
@@ -202,7 +203,7 @@ window.QUESTION_BANKS = {
         "related": [
           "Pre-LN vs Post-LN"
         ],
-        "floor": 1
+        "floor": 2
       },
       {
         "id": "trans-005",
@@ -246,7 +247,7 @@ window.QUESTION_BANKS = {
         "related": [
           "三种架构对比"
         ],
-        "floor": 1
+        "floor": 2
       },
       {
         "id": "trans-007",
@@ -270,7 +271,7 @@ window.QUESTION_BANKS = {
           "缩放点积注意力",
           "梯度消失"
         ],
-        "floor": 1
+        "floor": 2
       },
       {
         "id": "trans-008",
@@ -316,7 +317,7 @@ window.QUESTION_BANKS = {
           "位置编码",
           "RoPE 旋转位置编码"
         ],
-        "floor": 1
+        "floor": 3
       },
       {
         "id": "trans-010",
@@ -339,7 +340,7 @@ window.QUESTION_BANKS = {
         "related": [
           "注意力复杂度"
         ],
-        "floor": 1
+        "floor": 2
       },
       {
         "id": "trans-boss-1",
@@ -362,7 +363,7 @@ window.QUESTION_BANKS = {
           "boss"
         ],
         "min_keywords": 3,
-        "floor": 1
+        "floor": 3
       },
       {
         "id": "pre-001",
@@ -430,7 +431,7 @@ window.QUESTION_BANKS = {
         "related": [
           "PPO 四模型"
         ],
-        "floor": 2
+        "floor": 3
       },
       {
         "id": "pre-004",
@@ -453,7 +454,7 @@ window.QUESTION_BANKS = {
         "related": [
           "DPO vs PPO"
         ],
-        "floor": 2
+        "floor": 3
       },
       {
         "id": "pre-005",
@@ -498,7 +499,7 @@ window.QUESTION_BANKS = {
         "related": [
           "GRPO 组相对策略优化"
         ],
-        "floor": 2
+        "floor": 4
       },
       {
         "id": "pre-007",
@@ -521,7 +522,7 @@ window.QUESTION_BANKS = {
         "related": [
           "LoRA 低秩适配"
         ],
-        "floor": 2
+        "floor": 3
       },
       {
         "id": "pre-008",
@@ -545,7 +546,7 @@ window.QUESTION_BANKS = {
           "KL 散度惩罚",
           "奖励黑客"
         ],
-        "floor": 2
+        "floor": 3
       },
       {
         "id": "pre-009",
@@ -593,7 +594,7 @@ window.QUESTION_BANKS = {
           "3D 并行",
           "分布式训练"
         ],
-        "floor": 2
+        "floor": 4
       },
       {
         "id": "pre-boss-1",
@@ -618,7 +619,7 @@ window.QUESTION_BANKS = {
           "boss"
         ],
         "min_keywords": 3,
-        "floor": 2
+        "floor": 4
       },
       {
         "id": "rag-001",
@@ -685,7 +686,7 @@ window.QUESTION_BANKS = {
         "related": [
           "向量相似度"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-004",
@@ -707,7 +708,7 @@ window.QUESTION_BANKS = {
         "related": [
           "文档切块策略"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-005",
@@ -729,7 +730,7 @@ window.QUESTION_BANKS = {
         "related": [
           "RAG 优化"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-006",
@@ -751,7 +752,7 @@ window.QUESTION_BANKS = {
         "related": [
           "Agent vs RAG"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-007",
@@ -773,7 +774,7 @@ window.QUESTION_BANKS = {
         "related": [
           "ReAct 框架"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-008",
@@ -796,7 +797,7 @@ window.QUESTION_BANKS = {
         "related": [
           "投机采样"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-009",
@@ -819,7 +820,7 @@ window.QUESTION_BANKS = {
         "related": [
           "KV Cache"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-010",
@@ -842,7 +843,7 @@ window.QUESTION_BANKS = {
         "related": [
           "模型量化"
         ],
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "rag-boss-1",
@@ -870,7 +871,7 @@ window.QUESTION_BANKS = {
           "boss"
         ],
         "min_keywords": 5,
-        "floor": 3
+        "floor": 4
       },
       {
         "id": "dist-001",
@@ -1132,5 +1133,5 @@ window.QUESTION_BANKS = {
   }
 };
 
-// 默认题库
-window.QUESTION_BANK = window.QUESTION_BANKS['llm-interview']?.questions || [];
+// 兼容旧接口：默认题库 = 第一个
+window.QUESTION_BANK = window.QUESTION_BANKS[Object.keys(window.QUESTION_BANKS)[0]].questions;
