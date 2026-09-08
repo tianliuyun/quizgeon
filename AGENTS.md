@@ -109,9 +109,17 @@ quizgeon/
 | v0.15 | PWA 支持（离线可用） | ✅ |
 | v0.16 | 题库构建工具脚本 | ✅ |
 | v0.17 | 单元测试（42 JS + 20 Python） | ✅ |
-| v0.18 | 开源准备（LICENSE + 贡献指南 + Issue/PR 模板） | 🚧 |
+| v0.18 | 开源准备（LICENSE + 贡献指南 + Issue/PR 模板） | ✅ |
 | v0.19 | 性能优化 + 可访问性 | 📌 |
-| v0.20 | 最终打磨 + 发布 | 📌 |
+| v0.20 | 最终打磨 + 正式发布 | 📌 |
+
+## 开源信息
+
+- **GitHub 仓库**：https://github.com/tianliuyun/quizgeon
+- **在线玩**：https://tianliuyun.github.io/quizgeon/
+- **Topics**：quiz-game, roguelike, spaced-repetition, interview-prep, llm, pwa, vanilla-javascript, game, learning, flashcards
+- **License**：MIT
+- **首次提交日期**：2026-09-08
 
 ## 红线
 
