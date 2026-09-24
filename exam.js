@@ -3,7 +3,9 @@
 (function () {
   'use strict';
 
-  const JUDGE_URL = 'http://127.0.0.1:8787/judge';
+  // judge 地址跟随页面 host（本机 127.0.0.1 / Tailscale 100.x.x.x 自动适配）
+  const JUDGE_PORT = 8787;
+  const JUDGE_URL = `http://${location.hostname || '127.0.0.1'}:${JUDGE_PORT}/judge`;
   const STORE_KEY = 'quizgeon_exam_history';
 
   const $ = (id) => document.getElementById(id);

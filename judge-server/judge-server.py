@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8787)
-    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--host", default="0.0.0.0")
     args = parser.parse_args()
     print(f"Quizgeon Judge 服务启动: http://{args.host}:{args.port}  model={ARK_MODEL}")
     uvicorn.run(app, host=args.host, port=args.port)
