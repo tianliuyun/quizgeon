@@ -85,10 +85,19 @@ quizgeon/
 | 3 | 内容填充 | 4层地牢 + 44题 + Boss战 | ✅ 已完成 |
 | 4 | 打磨发布 | 动画/音效 + 移动端 + PWA + 测试 | ✅ 主体完成，v0.18-v0.20 收尾中 |
 | 5 | 开源运营 | 贡献指南 + Issue/PR 模板 + Pages 部署 | 🚧 进行中（v0.18） |
+| 6 | **考核体系** | 独立考核模式 + LLM 判分 + 117 题全覆盖 | ✅ V1/V1.1 完成，V1.2 待做 |
+
+## 考核体系（2026-09-24 新增，定位=老师大模型面试的每日考核工具）
+
+- **exam.html**：独立考核模式（游戏本体之外），选题库/题数/限时、随机抽题、变式防背题、**答题卡**（题号网格+状态色+点击跳转）、open 题 LLM 判分、报告（正确率/得分点/三级标签聚合/错题）
+- **exam.js**：考核逻辑（判断地址跟随页面 host 自动适配本机/Tailscale）
+- **judge-server/**：本地 FastAPI 判分服务（火山 deepseek-v4-flash，读 ~/.hermes/.env 的 ARK_API_KEY），open 题按得分点逐条判分
+- **题库**：117 题（17/18 周 + 3 简历项目 + 7 技术栈），每题带 week/project/stack 三级标签 + points（open）+ variants（变式）
+- **构建**：改 questions/*.yaml 后 `~/.hermes/hermes-agent/venv/bin/python3 scripts/build-questions.py` 重新生成 src/js/data/questions.js
+- **使用**：本地 `http://100.122.77.116:8765/exam.html`（Tailscale，含判分）/ 网页版 https://tianliuyun.github.io/quizgeon/exam.html（客观题）
+- **服务**：页面 http.server 8765 + judge 8787（均绑 0.0.0.0；judge 无鉴权，仅限 Tailscale 信任设备）
 
 ## 版本进度（实际迭代）
-
-已完成 v0.1 ~ v0.17，当前 v0.18 进行中，目标 v0.20 发布。
 
 | 版本 | 核心内容 | 状态 |
 |------|---------|------|
@@ -112,6 +121,9 @@ quizgeon/
 | v0.18 | 开源准备（LICENSE + 贡献指南 + Issue/PR 模板） | ✅ |
 | v0.19 | 性能优化 + 可访问性 | 📌 |
 | v0.20 | 最终打磨 + 正式发布 | 📌 |
+| 考核 V1 | 考核模式 + LLM 判分 + 47 题 | ✅ |
+| 考核 V1.1 | 答题卡 + 三级标签 + 117 题全覆盖 | ✅ |
+| 考核 V1.2 | 分数曲线 + 模拟面试 + 间隔复测 | 📌 |
 
 ## 开源信息
 
