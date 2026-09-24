@@ -168,11 +168,13 @@ def validate_question(q, bank_id, filepath):
     if 'difficulty' in q and q['difficulty'] not in ('easy', 'medium', 'hard'):
         errors.append(f"difficulty 非法: {q['difficulty']} (应为 easy/medium/hard)")
 
-    if 'type' in q and q['type'] not in ('single', 'multiple', 'judge', 'open'):
-        errors.append(f"type 非法: {q['type']} (应为 single/multiple/judge/open)")
+    if 'type' in q and q['type'] not in ('single', 'multiple', 'judge', 'boolean', 'open'):
+        errors.append(f"type 非法: {q['type']} (应为 single/multiple/judge/boolean/open)")
 
-    # 开放题不需要 options，提前返回
-    if q.get('type') == 'open':
+    # 开放题/判断题不需要 options，提前返回
+    if q.get('type') in ('open', 'judge', 'boolean'):
+        if q.get('type') in ('judge', 'boolean') and 'answer' in q and q['answer'] not in (True, False, 'true', 'false', '正确', '错误'):
+            errors.append(f"判断题答案非法: {q['answer']} (应为 true/false)")
         return len(errors) == 0, errors
 
     # 选择题需要 options
@@ -221,6 +223,9 @@ def build_questions(questions_dir, output_path, target_bank=None):
     # 遍历每个题库子目录
     for bank_dir in sorted(questions_dir.iterdir()):
         if not bank_dir.is_dir():
+            continue
+        # 跳过归档/隐藏目录（_ 开头）
+        if bank_dir.name.startswith('_'):
             continue
         bank_id = bank_dir.name
 

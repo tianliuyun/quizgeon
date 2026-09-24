@@ -1,253 +1,163 @@
+# Transformer 核心原理题库（考核体系 V1）
+# 题型：single（单选）/ boolean（判断）/ open（简答，得分点判分）
+# 来源：速查卡 01-Transformer核心原理 + 高频面试题 1-4/7-8
 - id: trans-001
   difficulty: easy
   type: single
   question: Self-Attention 的计算公式是什么？
   options:
-  - A. softmax(QKᵀ) · V
-  - B. softmax(QKᵀ/√dₖ) · V
-  - C. sigmoid(QKᵀ/√dₖ) · V
-  - D. softmax(QVᵀ/√dₖ) · K
+    - A. softmax(QKᵀ) · V
+    - B. softmax(QKᵀ/√dₖ) · V
+    - C. sigmoid(QKᵀ/√dₖ) · V
+    - D. softmax(QVᵀ/√dₖ) · K
   answer: B
-  explanation: '自注意力公式：Attention(Q, K, V) = softmax(QKᵀ/√dₖ) · V。
-
-    除以 √dₖ 是缩放因子，防止点积过大导致 softmax 饱和。
-
-    '
-  tags:
-  - transformer
-  - attention
-  related:
-  - 自注意力公式
-  - 缩放点积注意力
+  explanation: 自注意力公式 Attention(Q,K,V)=softmax(QKᵀ/√dₖ)·V。除以 √dₖ 是缩放因子，防止点积过大导致 softmax 饱和进入梯度平缓区。
+  tags: [transformer, attention]
+  variants:
+    - 缩放因子 √dₖ 的作用是什么？不缩放会怎样？
+    - 为什么用 QKᵀ 而不是 QVᵀ 计算注意力分数？
 - id: trans-002
   difficulty: easy
   type: single
-  question: Transformer 中，Multi-Head Attention 的「多头」主要作用是什么？
+  question: Multi-Head Attention 的「多头」主要作用是什么？
   options:
-  - A. 减少参数量，加快计算
-  - B. 在不同子空间学习不同类型的依赖关系
-  - C. 让序列长度可以任意扩展
-  - D. 替代残差连接的作用
+    - A. 减少参数量，加快计算
+    - B. 在不同子空间学习不同类型的依赖关系
+    - C. 让序列长度可以任意扩展
+    - D. 替代残差连接的作用
   answer: B
-  explanation: '多头注意力让模型在不同的表示子空间里同时关注不同类型的依赖关系。
-
-    比如有的头关注句法依存，有的关注指代关系，有的关注远距离关联。
-
-    多头不增加总参数量（d_model 拆成 h 个头，每个头 d_k = d_model/h）。
-
-    '
-  tags:
-  - transformer
-  - multi-head attention
-  related:
-  - 多头注意力
+  explanation: 多头让模型在不同表示子空间同时关注不同类型依赖（句法/指代/远距离）。多头不增加总参数量（d_model 拆成 h 头，每头 d_k=d_model/h）。
+  tags: [transformer, multi-head]
+  variants:
+    - 多头注意力为什么不增加总参数量？
+    - 如果只用单头注意力，模型会损失什么能力？
 - id: trans-003
   difficulty: easy
   type: single
   question: 为什么 NLP 中通常用 LayerNorm 而不用 BatchNorm？
   options:
-  - A. LayerNorm 计算更快
-  - B. NLP 序列长度不一且 batch 通常小，BN 统计量不准
-  - C. BatchNorm 不能用在 GPU 上
-  - D. LayerNorm 的参数更多
+    - A. LayerNorm 计算更快
+    - B. NLP 序列长度不一且 batch 通常小，BN 统计量不准
+    - C. BatchNorm 无法用 GPU 加速
+    - D. LayerNorm 不需要训练参数
   answer: B
-  explanation: 'BN 在 batch 维度归一化，但 NLP 中：
-
-    1. 序列长度不一，padding 多，统计量不准；
-
-    2. batch size 通常小（受显存限制），BN 不稳定。
-
-    LN 对每个样本独立归一化，不受 batch size 和序列长度影响。
-
-    '
-  tags:
-  - transformer
-  - layer-norm
-  - batch-norm
-  related:
-  - LayerNorm vs BatchNorm
+  explanation: BN 在同一 batch 的同一特征维度归一化，受 batch 大小和序列 padding 影响；LN 对每个样本所有特征维度归一化，不依赖 batch 和序列长度。三个原因：序列长度不一/padding、batch 小统计不稳、推理时全局统计量不好用。
+  tags: [transformer, normalization]
+  variants:
+    - 现代大模型常用 RMSNorm，它和 LayerNorm 有什么区别？
+    - 如果 batch size 很大且序列等长，BN 是否可行？
 - id: trans-004
   difficulty: medium
   type: single
-  question: Pre-LN 和 Post-LN 的主要区别是什么？
+  question: 自注意力机制的时间复杂度是？
   options:
-  - A. Pre-LN 在残差前做 LN，训练更稳定，深层模型都用它
-  - B. Post-LN 在残差前做 LN，效果更好
-  - C. Pre-LN 是原始论文用的结构
-  - D. 两者完全等价，只是实现不同
-  answer: A
-  explanation: 'Post-LN（原始论文）：Attention → 残差 → LN → FFN → 残差 → LN
-
-    Pre-LN（现代主流）：LN → Attention → 残差 → LN → FFN → 残差
-
-    Pre-LN 训练更稳定，不需要 warmup，深层模型都用 Pre-LN。
-
-    '
-  tags:
-  - transformer
-  - pre-ln
-  - post-ln
-  related:
-  - Pre-LN vs Post-LN
+    - A. O(n)，n 是序列长度
+    - B. O(n²)，n 是序列长度
+    - C. O(n²·d)，d 是隐藏维度
+    - D. O(n·d)
+  answer: C
+  explanation: QKᵀ 计算是 O(n²·d)，n 是序列长度。所以长序列下注意力是瓶颈，引出稀疏注意力、线性注意力、FlashAttention 等优化。
+  tags: [transformer, complexity]
+  variants:
+    - 长序列场景下，有哪些降低注意力复杂度的方法？
+    - FlashAttention 为什么能省显存？
 - id: trans-005
-  difficulty: easy
-  type: single
-  question: 残差连接主要解决什么问题？
-  options:
-  - A. 提高模型参数量
-  - B. 解决梯度消失，让深层网络可训练
-  - C. 加快推理速度
-  - D. 减少过拟合
-  answer: B
-  explanation: '残差连接 y = x + f(x)，反向传播时梯度变成 1 + ∂f/∂x，
-
-    至少有 1 的梯度保底，不会消失。这样才能堆几十上百层。
-
-    Transformer 每层有两个残差（Attention 后 + FFN 后）。
-
-    '
-  tags:
-  - transformer
-  - residual
-  related:
-  - 残差连接
-- id: trans-006
   difficulty: medium
   type: single
-  question: Encoder-only / Decoder-only / Encoder-Decoder 三种架构，哪个是当前大模型的主流？
+  question: Transformer 解决梯度消失、能处理长距离依赖的关键机制是？
   options:
-  - A. Encoder-only（BERT 系）
-  - B. Decoder-only（GPT 系）
-  - C. Encoder-Decoder（T5 系）
-  - D. 三者旗鼓相当
+    - A. 更深的网络 + 更大的词表
+    - B. 残差连接 + 注意力机制的直接通路
+    - C. 增大学习率
+    - D. 权值共享
   answer: B
-  explanation: '现在大模型主流是 Decoder-only（GPT/Llama/Qwen 都是）。
-
-    原因：生成是核心能力，单向因果注意力天然适合自回归生成；
-
-    统一架构能同时做理解和生成（prompt 形式），扩展性更强。
-
-    Encoder-only 擅长理解（分类/NER），不适合生成。
-
-    '
-  tags:
-  - transformer
-  - architecture
-  related:
-  - 三种架构对比
+  explanation: 残差连接让梯度通过恒等路径直接回传；注意力让任意两位置直接相连，梯度一跳就到，不存在长距离衰减。RNN 梯度连乘消失，Transformer 靠这两点取代 RNN。
+  tags: [transformer, gradient]
+  variants:
+    - RNN/LSTM 为什么会有梯度消失？LSTM 缓解了但没有根治的原因？
+    - 残差连接在 Transformer 中具体加在哪里？
+- id: trans-006
+  difficulty: easy
+  type: boolean
+  question: 位置编码是 Transformer 必需的，因为自注意力本身对 token 顺序不敏感（置换等变）。
+  answer: true
+  explanation: 自注意力对输入集合做加权，不含顺序信息，交换两个 token 位置输出不变（若键值对也交换）。必须加位置编码（绝对/相对/RoPE/ALiBi）注入位置信息。
+  tags: [transformer, position-encoding]
+  variants:
+    - 相对位置编码和绝对位置编码的区别？
+    - RoPE（旋转位置编码）为什么被大模型广泛采用？
 - id: trans-007
   difficulty: medium
-  type: single
-  question: Self-Attention 为什么要除以 √dₖ？
-  options:
-  - A. 让 QKᵀ 的值变小，节省显存
-  - B. 防止点积过大导致 softmax 饱和、梯度消失
-  - C. 让每个头的参数量一致
-  - D. 归一化到 0~1 之间
-  answer: B
-  explanation: '当 dₖ 很大时，QKᵀ 的点积值会很大（均值 0，方差 dₖ）。
-
-    点积过大 → softmax 输入两极分化 → 输出趋近 one-hot → 梯度接近 0（饱和）。
-
-    除以 √dₖ 后，点积方差变回 1，softmax 梯度更稳定。
-
-    例：dₖ=64 时，点积标准差 8；除以 8 后标准差 1。
-
-    '
-  tags:
-  - transformer
-  - attention
-  - scaling
-  related:
-  - 缩放点积注意力
-  - 梯度消失
+  type: boolean
+  question: Decoder-only 模型使用因果掩码（causal mask），保证当前位置只能看到过去的 token。
+  answer: true
+  explanation: Decoder-only 生成时不能看到未来 token，用上三角掩码（-inf）实现因果性。这是 GPT 系列与 BERT（双向）的核心区别。
+  tags: [transformer, decoder]
+  variants:
+    - Encoder-only 和 Decoder-only 在注意力上的本质区别是什么？
+    - 为什么现代大模型趋向 Decoder-only 大一统？
 - id: trans-008
-  difficulty: easy
-  type: single
-  question: Transformer 中的 FFN（Feed-Forward Network）是什么结构？
-  options:
-  - A. 一层线性层
-  - B. 两层线性层 + 激活，d_model → 4×d_model → d_model
-  - C. 卷积层
-  - D. 循环神经网络
-  answer: B
-  explanation: 'FFN = 两层线性变换 + GELU 激活，中间维度是 4×d_model。
-
-    作用：升维提供丰富的特征空间，每个 token 独立做非线性变换。
-
-    Attention 负责 token 之间的信息交互，FFN 负责 token 内部的特征加工。
-
-    '
-  tags:
-  - transformer
-  - ffn
-  related:
-  - FFN 前馈网络
+  difficulty: hard
+  type: open
+  question: 请完整描述 Self-Attention 的计算过程（从输入 X 到输出），并说明每个步骤的作用。
+  points:
+    - 输入 X 乘 Wq/Wk/Wv 得到 Q/K/V（线性投影，学习不同表示空间）
+    - 注意力分数 = Q·Kᵀ/√dₖ（点积衡量相似度，缩放防 softmax 饱和）
+    - softmax 归一化得到注意力权重（概率分布，权重和为 1）
+    - 加权求和 V（按注意力权重聚合信息，输出每个位置的上下文表示）
+    - 说明复杂度 O(n²·d) 或长序列瓶颈
+  answer:
+    - 计算 Q、K、V 三个矩阵
+    - QKᵀ 缩放、softmax、加权 V
+  explanation: 四步：投影→打分→归一化→加权聚合。注意要讲清"为什么除以 √dₖ"和"为什么 softmax"。
+  tags: [transformer, attention]
+  variants:
+    - 如果 dₖ 很大，不缩放会出什么问题？
+    - 注意力权重矩阵可视化的意义是什么？
 - id: trans-009
   difficulty: hard
-  type: single
-  question: 以下哪种位置编码支持长度外推（训练时短，推理时长）？
-  options:
-  - A. 正弦位置编码（原始论文）
-  - B. 可学习位置编码（BERT/GPT）
-  - C. RoPE（旋转位置编码）
-  - D. 以上都不支持
-  answer: C
-  explanation: 'RoPE（旋转位置编码，LLaMA/Qwen 主流）：在 Q/K 上做旋转变换注入位置信息。
-
-    特点：相对位置编码，支持长度外推，推理时可以比训练时长很多。
-
-    可学习位置编码不能外推（没学过的位置就乱了）。
-
-    正弦位置编码理论上可以外推，但实际效果不如 RoPE。
-
-    '
-  tags:
-  - transformer
-  - position-encoding
-  - RoPE
-  related:
-  - 位置编码
-  - RoPE 旋转位置编码
+  type: open
+  question: 对比 LayerNorm 和 BatchNorm，说明为什么 NLP 首选 LayerNorm（至少三点），并说明现代模型常用 RMSNorm 的原因。
+  points:
+    - LN 按样本在特征维归一化，BN 按 batch 在特征维归一化（定义对比）
+    - NLP 序列长度不一/padding 影响 BN 统计量
+    - batch size 小（显存限制）BN 统计不稳定
+    - 推理时 BN 全局统计量不适用于变长序列；LN 无需全局统计
+    - RMSNorm 去掉均值中心化只做缩放，更快更稳（可选加分）
+  answer:
+    - LN 按样本归一化，不依赖 batch
+    - 序列长度不一、batch 小、推理变长三个原因
+  explanation: 三点核心 + RMSNorm 加分项。答出定义对比 + 至少三个原因得满分。
+  tags: [transformer, normalization]
+  variants:
+    - 什么场景下 BatchNorm 反而更合适？
 - id: trans-010
   difficulty: medium
   type: single
-  question: Transformer 自注意力的计算复杂度是多少？（L = 序列长度，d = 维度）
+  question: KV Cache 解决什么问题？
   options:
-  - A. O(L·d)
-  - B. O(L²·d)
-  - C. O(L·d²)
-  - D. O(L²·d²)
+    - A. 减少模型的参数量
+    - B. 复用已生成的 token 的 K/V，避免重复计算
+    - C. 加快预训练速度
+    - D. 让模型支持无限上下文
   answer: B
-  explanation: '自注意力复杂度 = QKᵀ 矩阵乘法（L×d × d×L = L²×d）+ 乘以 V（L×L × L×d = L²×d）。
-
-    主要瓶颈是 L² 项，序列越长越慢。
-
-    优化方向：稀疏注意力（滑动窗口）、线性注意力、MQA/GQA（减少 KV 计算量）。
-
-    '
-  tags:
-  - transformer
-  - attention
-  - complexity
-  related:
-  - 注意力复杂度
-- id: trans-boss-1
+  explanation: 生成第 n 个 token 时，前 n-1 个 token 的 K/V 已算过，缓存复用，不用每次重算全部。Decode 阶段每次只算最新 token 的 KV。
+  tags: [inference, kv-cache]
+  variants:
+    - Prefill 和 Decode 阶段分别的瓶颈是什么？
+    - KV Cache 的显存占用和什么成正比？
+- id: trans-011
   difficulty: hard
-  type: open
-  question: 请简述 Transformer 中 Self-Attention 的完整计算过程，并解释为什么要除以 √dₖ。
-  answer:
-  - 计算 Q、K、V 三个矩阵，通过线性投影得到
-  - 计算注意力分数 QK^T
-  - 除以√d_k进行缩放
-  - softmax归一化得到注意力权重
-  - 乘以V得到输出
-  - 防止点积过大导致softmax饱和梯度消失
-  - 缩放点积注意力
-  explanation: Self-Attention 五步：1) 线性投影得到 Q/K/V；2) Q·Kᵀ 计算注意力分数；3) 除以 √dₖ 缩放（防止点积过大导致
-    softmax 饱和，梯度消失）；4) softmax 归一化得到权重；5) 加权求和 V 得到输出。
-  tags:
-  - transformer
-  - attention
-  - boss
-  min_keywords: 3
+  type: single
+  question: PagedAttention 提升吞吐的核心思想是什么？
+  options:
+    - A. 用更小的模型
+    - B. 把 KV Cache 分成固定大小的页，用页表管理，物理页可离散存放
+    - C. 减少输入长度
+    - D. 批量推理时合并 prompt
+  answer: B
+  explanation: 借鉴操作系统虚拟内存管理：KV Cache 分页 + 页表映射，物理页不连续、按需分配，消除显存碎片和 padding 浪费，显存利用率 40-60%→90%+，配合 continuous batching 吞吐提升 2-4 倍。这是 vLLM 的核心。
+  tags: [inference, vllm]
+  variants:
+    - 传统 KV Cache 的显存碎片问题是怎么产生的？
+    - Continuous batching 和 PagedAttention 如何配合？

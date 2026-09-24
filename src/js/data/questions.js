@@ -112,7 +112,7 @@ window.QUESTION_BANKS = {
     "name": "大模型面试",
     "emoji": "🧠",
     "description": "大模型工程师面试题库，覆盖 Transformer / 预训练 / SFT / RAG / Agent / 推理优化",
-    "questionCount": 44,
+    "questionCount": 47,
     "questions": [
       {
         "id": "trans-001",
@@ -126,14 +126,14 @@ window.QUESTION_BANKS = {
           "D. softmax(QVᵀ/√dₖ) · K"
         ],
         "answer": "B",
-        "explanation": "自注意力公式：Attention(Q, K, V) = softmax(QKᵀ/√dₖ) · V。\n除以 √dₖ 是缩放因子，防止点积过大导致 softmax 饱和。\n",
+        "explanation": "自注意力公式 Attention(Q,K,V)=softmax(QKᵀ/√dₖ)·V。除以 √dₖ 是缩放因子，防止点积过大导致 softmax 饱和进入梯度平缓区。",
         "tags": [
           "transformer",
           "attention"
         ],
-        "related": [
-          "自注意力公式",
-          "缩放点积注意力"
+        "variants": [
+          "缩放因子 √dₖ 的作用是什么？不缩放会怎样？",
+          "为什么用 QKᵀ 而不是 QVᵀ 计算注意力分数？"
         ],
         "floor": 1
       },
@@ -141,7 +141,7 @@ window.QUESTION_BANKS = {
         "id": "trans-002",
         "difficulty": "easy",
         "type": "single",
-        "question": "Transformer 中，Multi-Head Attention 的「多头」主要作用是什么？",
+        "question": "Multi-Head Attention 的「多头」主要作用是什么？",
         "options": [
           "A. 减少参数量，加快计算",
           "B. 在不同子空间学习不同类型的依赖关系",
@@ -149,13 +149,14 @@ window.QUESTION_BANKS = {
           "D. 替代残差连接的作用"
         ],
         "answer": "B",
-        "explanation": "多头注意力让模型在不同的表示子空间里同时关注不同类型的依赖关系。\n比如有的头关注句法依存，有的关注指代关系，有的关注远距离关联。\n多头不增加总参数量（d_model 拆成 h 个头，每个头 d_k = d_model/h）。\n",
+        "explanation": "多头让模型在不同表示子空间同时关注不同类型依赖（句法/指代/远距离）。多头不增加总参数量（d_model 拆成 h 头，每头 d_k=d_model/h）。",
         "tags": [
           "transformer",
-          "multi-head attention"
+          "multi-head"
         ],
-        "related": [
-          "多头注意力"
+        "variants": [
+          "多头注意力为什么不增加总参数量？",
+          "如果只用单头注意力，模型会损失什么能力？"
         ],
         "floor": 1
       },
@@ -167,18 +168,18 @@ window.QUESTION_BANKS = {
         "options": [
           "A. LayerNorm 计算更快",
           "B. NLP 序列长度不一且 batch 通常小，BN 统计量不准",
-          "C. BatchNorm 不能用在 GPU 上",
-          "D. LayerNorm 的参数更多"
+          "C. BatchNorm 无法用 GPU 加速",
+          "D. LayerNorm 不需要训练参数"
         ],
         "answer": "B",
-        "explanation": "BN 在 batch 维度归一化，但 NLP 中：\n1. 序列长度不一，padding 多，统计量不准；\n2. batch size 通常小（受显存限制），BN 不稳定。\nLN 对每个样本独立归一化，不受 batch size 和序列长度影响。\n",
+        "explanation": "BN 在同一 batch 的同一特征维度归一化，受 batch 大小和序列 padding 影响；LN 对每个样本所有特征维度归一化，不依赖 batch 和序列长度。三个原因：序列长度不一/padding、batch 小统计不稳、推理时全局统计量不好用。",
         "tags": [
           "transformer",
-          "layer-norm",
-          "batch-norm"
+          "normalization"
         ],
-        "related": [
-          "LayerNorm vs BatchNorm"
+        "variants": [
+          "现代大模型常用 RMSNorm，它和 LayerNorm 有什么区别？",
+          "如果 batch size 很大且序列等长，BN 是否可行？"
         ],
         "floor": 1
       },
@@ -186,136 +187,132 @@ window.QUESTION_BANKS = {
         "id": "trans-004",
         "difficulty": "medium",
         "type": "single",
-        "question": "Pre-LN 和 Post-LN 的主要区别是什么？",
+        "question": "自注意力机制的时间复杂度是？",
         "options": [
-          "A. Pre-LN 在残差前做 LN，训练更稳定，深层模型都用它",
-          "B. Post-LN 在残差前做 LN，效果更好",
-          "C. Pre-LN 是原始论文用的结构",
-          "D. 两者完全等价，只是实现不同"
+          "A. O(n)，n 是序列长度",
+          "B. O(n²)，n 是序列长度",
+          "C. O(n²·d)，d 是隐藏维度",
+          "D. O(n·d)"
         ],
-        "answer": "A",
-        "explanation": "Post-LN（原始论文）：Attention → 残差 → LN → FFN → 残差 → LN\nPre-LN（现代主流）：LN → Attention → 残差 → LN → FFN → 残差\nPre-LN 训练更稳定，不需要 warmup，深层模型都用 Pre-LN。\n",
+        "answer": "C",
+        "explanation": "QKᵀ 计算是 O(n²·d)，n 是序列长度。所以长序列下注意力是瓶颈，引出稀疏注意力、线性注意力、FlashAttention 等优化。",
         "tags": [
           "transformer",
-          "pre-ln",
-          "post-ln"
+          "complexity"
         ],
-        "related": [
-          "Pre-LN vs Post-LN"
+        "variants": [
+          "长序列场景下，有哪些降低注意力复杂度的方法？",
+          "FlashAttention 为什么能省显存？"
         ],
         "floor": 2
       },
       {
         "id": "trans-005",
-        "difficulty": "easy",
-        "type": "single",
-        "question": "残差连接主要解决什么问题？",
-        "options": [
-          "A. 提高模型参数量",
-          "B. 解决梯度消失，让深层网络可训练",
-          "C. 加快推理速度",
-          "D. 减少过拟合"
-        ],
-        "answer": "B",
-        "explanation": "残差连接 y = x + f(x)，反向传播时梯度变成 1 + ∂f/∂x，\n至少有 1 的梯度保底，不会消失。这样才能堆几十上百层。\nTransformer 每层有两个残差（Attention 后 + FFN 后）。\n",
-        "tags": [
-          "transformer",
-          "residual"
-        ],
-        "related": [
-          "残差连接"
-        ],
-        "floor": 1
-      },
-      {
-        "id": "trans-006",
         "difficulty": "medium",
         "type": "single",
-        "question": "Encoder-only / Decoder-only / Encoder-Decoder 三种架构，哪个是当前大模型的主流？",
+        "question": "Transformer 解决梯度消失、能处理长距离依赖的关键机制是？",
         "options": [
-          "A. Encoder-only（BERT 系）",
-          "B. Decoder-only（GPT 系）",
-          "C. Encoder-Decoder（T5 系）",
-          "D. 三者旗鼓相当"
+          "A. 更深的网络 + 更大的词表",
+          "B. 残差连接 + 注意力机制的直接通路",
+          "C. 增大学习率",
+          "D. 权值共享"
         ],
         "answer": "B",
-        "explanation": "现在大模型主流是 Decoder-only（GPT/Llama/Qwen 都是）。\n原因：生成是核心能力，单向因果注意力天然适合自回归生成；\n统一架构能同时做理解和生成（prompt 形式），扩展性更强。\nEncoder-only 擅长理解（分类/NER），不适合生成。\n",
+        "explanation": "残差连接让梯度通过恒等路径直接回传；注意力让任意两位置直接相连，梯度一跳就到，不存在长距离衰减。RNN 梯度连乘消失，Transformer 靠这两点取代 RNN。",
         "tags": [
           "transformer",
-          "architecture"
+          "gradient"
         ],
-        "related": [
-          "三种架构对比"
+        "variants": [
+          "RNN/LSTM 为什么会有梯度消失？LSTM 缓解了但没有根治的原因？",
+          "残差连接在 Transformer 中具体加在哪里？"
         ],
         "floor": 2
       },
       {
-        "id": "trans-007",
-        "difficulty": "medium",
-        "type": "single",
-        "question": "Self-Attention 为什么要除以 √dₖ？",
-        "options": [
-          "A. 让 QKᵀ 的值变小，节省显存",
-          "B. 防止点积过大导致 softmax 饱和、梯度消失",
-          "C. 让每个头的参数量一致",
-          "D. 归一化到 0~1 之间"
-        ],
-        "answer": "B",
-        "explanation": "当 dₖ 很大时，QKᵀ 的点积值会很大（均值 0，方差 dₖ）。\n点积过大 → softmax 输入两极分化 → 输出趋近 one-hot → 梯度接近 0（饱和）。\n除以 √dₖ 后，点积方差变回 1，softmax 梯度更稳定。\n例：dₖ=64 时，点积标准差 8；除以 8 后标准差 1。\n",
+        "id": "trans-006",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "位置编码是 Transformer 必需的，因为自注意力本身对 token 顺序不敏感（置换等变）。",
+        "answer": true,
+        "explanation": "自注意力对输入集合做加权，不含顺序信息，交换两个 token 位置输出不变（若键值对也交换）。必须加位置编码（绝对/相对/RoPE/ALiBi）注入位置信息。",
         "tags": [
           "transformer",
-          "attention",
-          "scaling"
+          "position-encoding"
         ],
-        "related": [
-          "缩放点积注意力",
-          "梯度消失"
+        "variants": [
+          "相对位置编码和绝对位置编码的区别？",
+          "RoPE（旋转位置编码）为什么被大模型广泛采用？"
+        ],
+        "floor": 1
+      },
+      {
+        "id": "trans-007",
+        "difficulty": "medium",
+        "type": "boolean",
+        "question": "Decoder-only 模型使用因果掩码（causal mask），保证当前位置只能看到过去的 token。",
+        "answer": true,
+        "explanation": "Decoder-only 生成时不能看到未来 token，用上三角掩码（-inf）实现因果性。这是 GPT 系列与 BERT（双向）的核心区别。",
+        "tags": [
+          "transformer",
+          "decoder"
+        ],
+        "variants": [
+          "Encoder-only 和 Decoder-only 在注意力上的本质区别是什么？",
+          "为什么现代大模型趋向 Decoder-only 大一统？"
         ],
         "floor": 2
       },
       {
         "id": "trans-008",
-        "difficulty": "easy",
-        "type": "single",
-        "question": "Transformer 中的 FFN（Feed-Forward Network）是什么结构？",
-        "options": [
-          "A. 一层线性层",
-          "B. 两层线性层 + 激活，d_model → 4×d_model → d_model",
-          "C. 卷积层",
-          "D. 循环神经网络"
+        "difficulty": "hard",
+        "type": "open",
+        "question": "请完整描述 Self-Attention 的计算过程（从输入 X 到输出），并说明每个步骤的作用。",
+        "points": [
+          "输入 X 乘 Wq/Wk/Wv 得到 Q/K/V（线性投影，学习不同表示空间）",
+          "注意力分数 = Q·Kᵀ/√dₖ（点积衡量相似度，缩放防 softmax 饱和）",
+          "softmax 归一化得到注意力权重（概率分布，权重和为 1）",
+          "加权求和 V（按注意力权重聚合信息，输出每个位置的上下文表示）",
+          "说明复杂度 O(n²·d) 或长序列瓶颈"
         ],
-        "answer": "B",
-        "explanation": "FFN = 两层线性变换 + GELU 激活，中间维度是 4×d_model。\n作用：升维提供丰富的特征空间，每个 token 独立做非线性变换。\nAttention 负责 token 之间的信息交互，FFN 负责 token 内部的特征加工。\n",
+        "answer": [
+          "计算 Q、K、V 三个矩阵",
+          "QKᵀ 缩放、softmax、加权 V"
+        ],
+        "explanation": "四步：投影→打分→归一化→加权聚合。注意要讲清\"为什么除以 √dₖ\"和\"为什么 softmax\"。",
         "tags": [
           "transformer",
-          "ffn"
+          "attention"
         ],
-        "related": [
-          "FFN 前馈网络"
+        "variants": [
+          "如果 dₖ 很大，不缩放会出什么问题？",
+          "注意力权重矩阵可视化的意义是什么？"
         ],
-        "floor": 1
+        "floor": 3
       },
       {
         "id": "trans-009",
         "difficulty": "hard",
-        "type": "single",
-        "question": "以下哪种位置编码支持长度外推（训练时短，推理时长）？",
-        "options": [
-          "A. 正弦位置编码（原始论文）",
-          "B. 可学习位置编码（BERT/GPT）",
-          "C. RoPE（旋转位置编码）",
-          "D. 以上都不支持"
+        "type": "open",
+        "question": "对比 LayerNorm 和 BatchNorm，说明为什么 NLP 首选 LayerNorm（至少三点），并说明现代模型常用 RMSNorm 的原因。",
+        "points": [
+          "LN 按样本在特征维归一化，BN 按 batch 在特征维归一化（定义对比）",
+          "NLP 序列长度不一/padding 影响 BN 统计量",
+          "batch size 小（显存限制）BN 统计不稳定",
+          "推理时 BN 全局统计量不适用于变长序列；LN 无需全局统计",
+          "RMSNorm 去掉均值中心化只做缩放，更快更稳（可选加分）"
         ],
-        "answer": "C",
-        "explanation": "RoPE（旋转位置编码，LLaMA/Qwen 主流）：在 Q/K 上做旋转变换注入位置信息。\n特点：相对位置编码，支持长度外推，推理时可以比训练时长很多。\n可学习位置编码不能外推（没学过的位置就乱了）。\n正弦位置编码理论上可以外推，但实际效果不如 RoPE。\n",
+        "answer": [
+          "LN 按样本归一化，不依赖 batch",
+          "序列长度不一、batch 小、推理变长三个原因"
+        ],
+        "explanation": "三点核心 + RMSNorm 加分项。答出定义对比 + 至少三个原因得满分。",
         "tags": [
           "transformer",
-          "position-encoding",
-          "RoPE"
+          "normalization"
         ],
-        "related": [
-          "位置编码",
-          "RoPE 旋转位置编码"
+        "variants": [
+          "什么场景下 BatchNorm 反而更合适？"
         ],
         "floor": 3
       },
@@ -323,68 +320,70 @@ window.QUESTION_BANKS = {
         "id": "trans-010",
         "difficulty": "medium",
         "type": "single",
-        "question": "Transformer 自注意力的计算复杂度是多少？（L = 序列长度，d = 维度）",
+        "question": "KV Cache 解决什么问题？",
         "options": [
-          "A. O(L·d)",
-          "B. O(L²·d)",
-          "C. O(L·d²)",
-          "D. O(L²·d²)"
+          "A. 减少模型的参数量",
+          "B. 复用已生成的 token 的 K/V，避免重复计算",
+          "C. 加快预训练速度",
+          "D. 让模型支持无限上下文"
         ],
         "answer": "B",
-        "explanation": "自注意力复杂度 = QKᵀ 矩阵乘法（L×d × d×L = L²×d）+ 乘以 V（L×L × L×d = L²×d）。\n主要瓶颈是 L² 项，序列越长越慢。\n优化方向：稀疏注意力（滑动窗口）、线性注意力、MQA/GQA（减少 KV 计算量）。\n",
+        "explanation": "生成第 n 个 token 时，前 n-1 个 token 的 K/V 已算过，缓存复用，不用每次重算全部。Decode 阶段每次只算最新 token 的 KV。",
         "tags": [
-          "transformer",
-          "attention",
-          "complexity"
+          "inference",
+          "kv-cache"
         ],
-        "related": [
-          "注意力复杂度"
+        "variants": [
+          "Prefill 和 Decode 阶段分别的瓶颈是什么？",
+          "KV Cache 的显存占用和什么成正比？"
         ],
         "floor": 2
       },
       {
-        "id": "trans-boss-1",
+        "id": "trans-011",
         "difficulty": "hard",
-        "type": "open",
-        "question": "请简述 Transformer 中 Self-Attention 的完整计算过程，并解释为什么要除以 √dₖ。",
-        "answer": [
-          "计算 Q、K、V 三个矩阵，通过线性投影得到",
-          "计算注意力分数 QK^T",
-          "除以√d_k进行缩放",
-          "softmax归一化得到注意力权重",
-          "乘以V得到输出",
-          "防止点积过大导致softmax饱和梯度消失",
-          "缩放点积注意力"
+        "type": "single",
+        "question": "PagedAttention 提升吞吐的核心思想是什么？",
+        "options": [
+          "A. 用更小的模型",
+          "B. 把 KV Cache 分成固定大小的页，用页表管理，物理页可离散存放",
+          "C. 减少输入长度",
+          "D. 批量推理时合并 prompt"
         ],
-        "explanation": "Self-Attention 五步：1) 线性投影得到 Q/K/V；2) Q·Kᵀ 计算注意力分数；3) 除以 √dₖ 缩放（防止点积过大导致 softmax 饱和，梯度消失）；4) softmax 归一化得到权重；5) 加权求和 V 得到输出。",
+        "answer": "B",
+        "explanation": "借鉴操作系统虚拟内存管理：KV Cache 分页 + 页表映射，物理页不连续、按需分配，消除显存碎片和 padding 浪费，显存利用率 40-60%→90%+，配合 continuous batching 吞吐提升 2-4 倍。这是 vLLM 的核心。",
         "tags": [
-          "transformer",
-          "attention",
-          "boss"
+          "inference",
+          "vllm"
         ],
-        "min_keywords": 3,
+        "variants": [
+          "传统 KV Cache 的显存碎片问题是怎么产生的？",
+          "Continuous batching 和 PagedAttention 如何配合？"
+        ],
         "floor": 3
       },
       {
         "id": "pre-001",
         "difficulty": "easy",
         "type": "single",
-        "question": "从原始文本到一个能对话的 AI 助手，大模型训练的四阶段正确顺序是？",
+        "question": "关于预训练、SFT、RLHF 三阶段的关系，说法正确的是？",
         "options": [
-          "A. 预训练 → SFT → 数据准备 → 对齐",
-          "B. 数据准备 → 预训练 → SFT → 对齐",
-          "C. SFT → 预训练 → 对齐 → 数据准备",
-          "D. 数据准备 → 对齐 → 预训练 → SFT"
+          "A. 预训练用几万条指令数据，SFT 用万亿 token 互联网文本",
+          "B. 预训练给知识、SFT 给格式、对齐给价值观，数据量递减、主观度递增",
+          "C. 三个阶段训练目标相同，只是数据量不同",
+          "D. 对齐（RLHF）在预训练之前进行"
         ],
         "answer": "B",
-        "explanation": "四阶段：数据准备（清洗去重分词）→ 预训练（下一词预测，获得语言能力）\n→ SFT 监督微调（学会按指令回答）→ 对齐（RLHF/DPO/GRPO，符合人类偏好）。\n口诀：预训练给知识，SFT 给格式，对齐给价值观。\n",
+        "explanation": "预训练用海量互联网文本（万亿 token）学语言和世界知识；SFT 用几万~几十万条指令数据学按指令回答；对齐用人类偏好数据让输出符合有用/无害/诚实。口诀：预训练给知识，SFT 给格式，对齐给价值观。数据量递减、主观度递增，顺序不能乱。",
         "tags": [
           "pretrain",
           "sft",
-          "rlhf"
+          "rlhf",
+          "pipeline"
         ],
-        "related": [
-          "训练四阶段"
+        "variants": [
+          "每个阶段分别用什么数据、训练目标是什么？",
+          "Base Model / SFT Model / Chat Model 分别对应哪个阶段？"
         ],
         "floor": 2
       },
@@ -392,22 +391,22 @@ window.QUESTION_BANKS = {
         "id": "pre-002",
         "difficulty": "easy",
         "type": "single",
-        "question": "SFT（监督微调）中，为什么要使用 Label Mask（只在 assistant 部分算 loss）？",
+        "question": "SFT 训练时，为什么把对话中 user 部分的 labels 设为 -100？",
         "options": [
-          "A. 减少显存占用",
-          "B. 让模型学会「如何回答」，而不是背熟用户的问题",
-          "C. 加快训练速度",
-          "D. 防止过拟合"
+          "A. 让模型学会复述用户的问题",
+          "B. 只想让模型学会「如何回答」，不需要背熟用户提问，-100 让交叉熵自动忽略该部分",
+          "C. 减少训练数据量，加快训练",
+          "D. 防止梯度爆炸"
         ],
         "answer": "B",
-        "explanation": "对话数据格式：<|user|>问题<|assistant|>回答\nuser 部分 labels 设为 -100（不计算 loss），只让 assistant 部分参与训练。\n目的：只想让模型学会「如何回答问题」，不需要背熟用户的提问。\n",
+        "explanation": "对话数据形如 <|user|>问题<|assistant|>回答，把 user 部分 labels 设为 -100，交叉熵自动忽略、不计算 loss。目的是让模型只学会如何回答问题，而不是背熟用户的问题。这就是 Label Mask 技巧。",
         "tags": [
           "sft",
           "label-mask"
         ],
-        "related": [
-          "SFT 监督微调",
-          "Label Mask"
+        "variants": [
+          "-100 在交叉熵计算里具体是怎么起作用的？",
+          "如果 user 部分也算 loss，模型会学到什么不好的东西？"
         ],
         "floor": 2
       },
@@ -415,21 +414,22 @@ window.QUESTION_BANKS = {
         "id": "pre-003",
         "difficulty": "medium",
         "type": "single",
-        "question": "PPO 强化学习训练时，显存里同时有几个模型？",
+        "question": "LoRA 用 W + A×B 近似权重更新，为什么 B 初始化为 0、A 随机初始化？",
         "options": [
-          "A. 2 个（Actor + Critic）",
-          "B. 3 个（Actor + Critic + RM）",
-          "C. 4 个（Actor + Critic + RM + Reference）",
-          "D. 1 个（Actor 兼任所有角色）"
+          "A. 让训练收敛更快",
+          "B. 初始时 A×B=0，输出与冻结的原模型完全一致，微调从原模型能力出发，训练稳定",
+          "C. 减少可训练参数量",
+          "D. 避免过拟合"
         ],
-        "answer": "C",
-        "explanation": "PPO 四模型：\n1. Actor（训练中，生成回答）\n2. Critic（训练中，估计 V(s)，算 Advantage）\n3. Reward Model（冻结，给回答打分）\n4. Reference Model（冻结，算 KL 散度防漂移）\n2 个训练 + 2 个冻结。\n",
+        "answer": "B",
+        "explanation": "B 初始化为 0 则 ΔW = A×B = 0，初始输出与冻结的原模型完全一致，微调从原模型已有能力出发，训练稳定。如果 A、B 都随机初始化，一开始就扰动输出，容易破坏模型已学到的能力。",
         "tags": [
-          "ppo",
-          "rlhf"
+          "lora",
+          "finetune"
         ],
-        "related": [
-          "PPO 四模型"
+        "variants": [
+          "推理时为什么可以把 A×B 合并回 W，实现零额外延迟？",
+          "如果 A、B 都随机初始化会有什么问题？"
         ],
         "floor": 3
       },
@@ -437,209 +437,211 @@ window.QUESTION_BANKS = {
         "id": "pre-004",
         "difficulty": "medium",
         "type": "single",
-        "question": "DPO 和 PPO 的核心区别是什么？",
+        "question": "PPO 训练需要 4 个模型，其中被冻结（不更新权重）的是哪两个？",
         "options": [
-          "A. DPO 效果更好但更复杂",
-          "B. DPO 把奖励模型隐式消解在损失函数里，不需要显式 RL 循环",
-          "C. DPO 需要更多显存",
-          "D. DPO 只能用于图像任务"
+          "A. Actor 和 Critic",
+          "B. Reward Model 和 Reference Model",
+          "C. Actor 和 Reward Model",
+          "D. Critic 和 Reference Model"
         ],
         "answer": "B",
-        "explanation": "PPO：SFT → 训练 RM → PPO 强化学习（显式 RL 循环，4 个模型）\nDPO：直接在偏好数据上做监督学习，奖励模型被隐式消解在损失函数里。\nDPO 更简单、更稳定、显存更低，但受限于离线数据（不能在线探索）。\n",
+        "explanation": "Actor（生成回答）和 Critic（估计 V(s)、算 Advantage）在训练中更新；Reward Model 冻结，负责给回答打分；Reference Model 冻结，负责算 KL 散度防止模型漂移。口诀：演员+评委+老师+标杆，2 个训练、2 个冻结。",
         "tags": [
-          "dpo",
-          "ppo",
-          "alignment"
+          "rlhf",
+          "ppo"
         ],
-        "related": [
-          "DPO vs PPO"
+        "variants": [
+          "Reference Model 的作用是什么？为什么需要它？",
+          "奖励公式 reward = r − β·KL 里 KL 惩罚项的意义是什么？"
         ],
         "floor": 3
       },
       {
         "id": "pre-005",
-        "difficulty": "easy",
+        "difficulty": "medium",
         "type": "single",
-        "question": "预训练阶段的训练目标是什么？",
+        "question": "关于 DPO 和 PPO 的区别，说法正确的是？",
         "options": [
-          "A. 分类损失",
-          "B. 下一词预测（Next Token Prediction）",
-          "C. 对比学习损失",
-          "D. 回归损失"
+          "A. DPO 需要显式训练奖励模型 RM，PPO 不需要",
+          "B. PPO 是显式 RL 循环（RM 打分 + 策略更新），DPO 把奖励模型隐式消解在损失函数里，直接做监督学习",
+          "C. DPO 比 PPO 表达能力更强，支持在线探索",
+          "D. 两者复杂度相同，只是实现框架不同"
         ],
         "answer": "B",
-        "explanation": "预训练目标：Next Token Prediction（下一词预测）。\n给前 N 个 token，预测第 N+1 个。\n损失函数：交叉熵（Cross Entropy）。\n评估指标：困惑度 PPL = exp(loss)，越低越好。\n",
+        "explanation": "PPO 是显式 RL 循环：SFT → 训练 RM → PPO 更新策略，4 个模型、需精细调参，表达能力强制可在线探索，适合通用对话对齐。DPO 跳过 RM 和 PPO，直接在偏好对（好回答 vs 坏回答）上做监督学习，拉大相对概率差，简单稳定，但受限于离线数据、表达能力弱。",
         "tags": [
-          "pretrain",
-          "next-token-prediction"
+          "dpo",
+          "ppo",
+          "alignment"
         ],
-        "related": [
-          "预训练目标"
+        "variants": [
+          "DPO 的损失函数在做什么？为什么能跳过奖励模型？",
+          "什么场景选 PPO，什么场景选 DPO？"
+        ],
+        "floor": 3
+      },
+      {
+        "id": "pre-006",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "BERT 是 Encoder-only 双向注意力架构，适合理解类任务（分类/NER）；GPT 是 Decoder-only 因果掩码架构，适合生成类任务。",
+        "answer": true,
+        "explanation": "BERT 双向注意力，预训练任务为 MLM（掩码语言模型）+ NSP，擅长理解类任务（分类、匹配、NER），微调方式是加分类头；GPT 单向因果掩码，预训练任务为 CLM（因果语言模型），擅长生成类任务（对话、写作），微调方式是 SFT/RLHF。理解类任务选 BERT 又快又准，生成类任务只能选 GPT 系。",
+        "tags": [
+          "bert",
+          "gpt",
+          "architecture"
+        ],
+        "variants": [
+          "理解类任务和生成类任务分别选什么架构？选型原则是什么？",
+          "为什么现在大模型趋向 Decoder-only 大一统？"
         ],
         "floor": 2
       },
       {
-        "id": "pre-006",
-        "difficulty": "hard",
-        "type": "single",
-        "question": "GRPO（Group Relative Policy Optimization）和 PPO 的主要区别是什么？",
-        "options": [
-          "A. GRPO 用组内平均奖励代替 Critic，省显存且更稳定",
-          "B. GRPO 训练更慢但效果更好",
-          "C. GRPO 需要更多模型",
-          "D. GRPO 只能用于文本生成"
-        ],
-        "answer": "A",
-        "explanation": "GRPO 核心：用组内相对奖励代替 Critic。\n同一道题采样 G 个答案，A_i = (r_i - mean(r)) / std(r)，比平均分高的就是好答案。\n优势：不需要 Critic → 省 25% 显存 + 避免 Critic 训练不稳定。\n适用：可验证奖励（数学题、代码，答案对不对有客观标准）。\n",
-        "tags": [
-          "grpo",
-          "rl",
-          "alignment"
-        ],
-        "related": [
-          "GRPO 组相对策略优化"
-        ],
-        "floor": 4
-      },
-      {
         "id": "pre-007",
         "difficulty": "medium",
-        "type": "single",
-        "question": "LoRA（Low-Rank Adaptation）微调的原理是什么？",
-        "options": [
-          "A. 直接修改原始权重 W",
-          "B. 在原始权重旁加两个低秩矩阵 A 和 B，训练只更新 A×B",
-          "C. 只训练偏置项",
-          "D. 把模型剪枝后再微调"
-        ],
-        "answer": "B",
-        "explanation": "LoRA 原理：不直接改原始权重 W，而是加两个小矩阵 A 和 B：W + A×B\nA 随机初始化，B 初始化为 0（初始时不影响输出）。\n训练时只更新 A 和 B，原始 W 冻结。\n可训练参数通常 0.1%~1%，显存省 90%+，推理时可合并回 W 零延迟。\n",
+        "type": "boolean",
+        "question": "预训练的目标（预测下一个词）与对齐的目标（输出有帮助、无害、诚实的回答）本质上是同一件事。",
+        "answer": false,
+        "explanation": "预训练目标 = 预测下一个 token，学到的是「互联网上的人怎么说」，不代表「助手应该怎么说」；对齐（RLHF/DPO/GRPO）用人类偏好把模型拉向有用/无害/诚实。两者目标不同，这正是对齐阶段存在的原因——如果目标相同就不需要对齐了。",
         "tags": [
-          "lora",
-          "finetune",
-          "parameter-efficient"
+          "pretrain",
+          "alignment"
         ],
-        "related": [
-          "LoRA 低秩适配"
+        "variants": [
+          "为什么纯预训练的 Base Model 不适合直接当助手？",
+          "对齐税是什么？为什么 RLHF 后某些能力会轻微退化？"
         ],
         "floor": 3
       },
       {
         "id": "pre-008",
         "difficulty": "medium",
-        "type": "single",
-        "question": "为什么 RLHF 中要有 KL 散度惩罚？",
-        "options": [
-          "A. 让模型生成更快",
-          "B. 防止模型为了拿高分而跑偏太远，保持在 SFT 模型附近",
-          "C. 减少参数量",
-          "D. 提高训练稳定性"
-        ],
-        "answer": "B",
-        "explanation": "奖励公式：reward = r - β·KL\nKL 散度衡量「当前策略模型」和「参考模型（SFT）」的差异。\n没有 KL 惩罚的话，模型可能为了讨好奖励模型而生成奇怪的文本（奖励黑客）。\nKL 惩罚保证模型在 SFT 基础上微调，不会跑偏太远。\n",
+        "type": "boolean",
+        "question": "LoRA 训练时冻结原始权重、只更新低秩矩阵 A 和 B；推理时可以把 A×B 合并回原始权重 W，推理零额外延迟。",
+        "answer": true,
+        "explanation": "训练时 W 冻结，只更新 A、B（可训练参数通常 0.1%~1%），优化器状态也只给 LoRA 参数，所以省显存。推理时预先算好 W' = W + A×B 合并后的权重，参数量与全量模型一样，无额外计算延迟；而且一个基座可以挂多个 LoRA 适配器，切换场景只换适配器。",
         "tags": [
-          "rlhf",
-          "ppo",
-          "kl-divergence"
+          "lora",
+          "inference"
         ],
-        "related": [
-          "KL 散度惩罚",
-          "奖励黑客"
+        "variants": [
+          "LoRA 省显存的核心原因是什么？",
+          "可训练参数大约占多少比例（r=8 时）？"
         ],
         "floor": 3
       },
       {
         "id": "pre-009",
-        "difficulty": "easy",
-        "type": "single",
-        "question": "关于 Scaling Law（缩放定律），以下哪个说法是正确的？",
-        "options": [
-          "A. 模型越大一定越好，没有上限",
-          "B. 性能和参数量、数据量、算力大致呈幂律关系",
-          "C. Scaling Law 只适用于视觉模型",
-          "D. 数据量对性能没有影响"
-        ],
-        "answer": "B",
-        "explanation": "Scaling Law：性能 ∝ 参数量^α × 数据量^β × 算力^γ\n大致是幂律关系，越大越强，可预测。\n但不是所有能力都遵循——有些能力是涌现的（过了阈值突然会）。\n",
-        "tags": [
-          "scaling-law",
-          "pretrain"
-        ],
-        "related": [
-          "缩放定律",
-          "涌现能力"
-        ],
-        "floor": 2
-      },
-      {
-        "id": "pre-010",
         "difficulty": "hard",
-        "type": "single",
-        "question": "分布式训练中，数据并行（DP）、张量并行（TP）、流水线并行（PP）的主要区别是什么？",
-        "options": [
-          "A. DP 切数据，TP 切矩阵，PP 切层",
-          "B. DP 切层，TP 切数据，PP 切矩阵",
-          "C. 三者都是一回事，只是名字不同",
-          "D. DP 最快，PP 最省显存"
+        "type": "open",
+        "question": "请完整描述大模型从原始文本到可对话助手的全流程（预训练与微调），说明每个阶段的目标、数据、训练目标和产出。",
+        "points": [
+          "数据准备：清洗、去重（MinHash/SimHash）、质量过滤、分词（BPE/WordPiece），产出万亿 token 级高质量语料",
+          "预训练：Next Token Prediction（下一词预测）+ 交叉熵损失，用万亿 token 互联网文本，产出 Base Model（续写器），学会语言能力和世界知识",
+          "SFT：几万~几十万条高质量指令数据，交叉熵但只算 assistant 部分（Label Mask），产出 SFT Model（学会听指令、对话格式）",
+          "对齐：人类偏好数据（偏好对/可验证奖励），用 PPO/DPO/GRPO，产出 Chat Model（对话助手），符合有用/无害/诚实",
+          "总结口诀：预训练给知识、SFT 给格式、对齐给价值观；数据量递减、主观度递增（可选加分）"
         ],
-        "answer": "A",
-        "explanation": "DP（数据并行）：每张卡有完整模型，数据分片，AllReduce 同步梯度。\nTP（张量并行）：把矩阵乘法切开，每张卡算一部分，通信量大。\nPP（流水线并行）：把模型分层，不同卡负责不同层，像流水线一样。\n三者结合 = 3D 并行，是训练大模型的标准做法。\n",
+        "answer": [
+          "四阶段及各阶段目标",
+          "每阶段的数据量级与训练目标",
+          "每阶段产出（Base/SFT/Chat Model）"
+        ],
+        "explanation": "按「数据准备 → 预训练 → SFT → 对齐」顺序答出每阶段「数据量 + 训练目标 + 产出」三个要素即可，用口诀「预训练给知识、SFT 给格式、对齐给价值观」总结得满分。",
         "tags": [
-          "distributed-training",
-          "data-parallel",
-          "tensor-parallel",
-          "pipeline-parallel"
+          "pretrain",
+          "sft",
+          "alignment",
+          "pipeline"
         ],
-        "related": [
-          "3D 并行",
-          "分布式训练"
+        "variants": [
+          "为什么 Base Model 不能直接当助手用？",
+          "如果跳过 SFT 直接做 RLHF 会怎样？（R1-Zero 的启示）"
         ],
         "floor": 4
       },
       {
-        "id": "pre-boss-1",
+        "id": "pre-010",
         "difficulty": "hard",
         "type": "open",
-        "question": "请比较 PPO、DPO、GRPO 三种对齐方法的核心区别，说明各自的优缺点和适用场景。",
-        "answer": [
-          "PPO需要四个模型 Actor Critic RM Reference",
-          "DPO把奖励模型隐式消解在损失函数里",
-          "GRPO用组内相对奖励代替Critic",
-          "PPO最复杂显存最大但可以在线探索",
-          "DPO最简单稳定但受限于离线数据",
-          "GRPO省显存适合可验证奖励如数学代码",
-          "KL散度惩罚防止模型跑偏"
+        "question": "对比 RLHF/PPO、DPO、GRPO 三种对齐方法，说明各自的原理、优缺点和适用场景。",
+        "points": [
+          "RLHF 三步骤：SFT → 训练奖励模型 RM（偏好对，损失 -log σ(r_w - r_l)，好回答得分高于坏回答）→ PPO 强化学习",
+          "PPO 四模型：Actor（训练更新，生成回答）+ Critic（训练更新，估计 V(s) 算 Advantage）+ Reward Model（冻结，打分）+ Reference Model（冻结，算 KL 散度防漂移）；奖励 = r − β·KL；PPO Clip 把策略更新限制在 [1-ε, 1+ε]",
+          "DPO：跳过 RM+PPO，把奖励模型隐式消解在损失函数里，直接在偏好对（好回答 vs 坏回答）上做监督学习，拉大相对概率差；简单稳定、显存低，但受限于离线数据、表达能力弱",
+          "GRPO：用组内平均奖励代替 Critic，A_i = (r_i - mean(r)) / std(r)，省约 25% 显存、避免 Critic 训练不稳定；3 个模型（Actor + RM + Reference）；适合可验证奖励（数学、代码、格式遵循），不适合开放对话",
+          "对比维度：PPO 复杂度高需精细调参、表达能力强；DPO 简单稳定、表达受限；对齐税：RLHF 后能力可能轻微退化（可选加分）"
         ],
-        "explanation": "PPO：4个模型，显式RL循环，可在线探索但复杂不稳定；DPO：直接偏好优化，奖励模型隐式消解，简单稳定但离线；GRPO：组相对策略优化，用组内平均奖励代替Critic，省显存，适合可验证奖励任务。",
+        "answer": [
+          "三种方法的原理一句话概括",
+          "PPO 的四模型与奖励公式",
+          "各自的优缺点与适用场景"
+        ],
+        "explanation": "三种方法各答出「原理一句话 + 关键机制 + 适用场景」：PPO 答出四模型和 KL 惩罚，DPO 答出隐式奖励、跳过 RL 循环，GRPO 答出组内相对优势、去掉 Critic，即得满分。",
         "tags": [
           "rlhf",
           "ppo",
           "dpo",
           "grpo",
-          "boss"
+          "alignment"
         ],
-        "min_keywords": 3,
+        "variants": [
+          "为什么 GRPO 不需要 Critic？能省多少显存？",
+          "数学/代码场景选哪种对齐方法，开放对话场景选哪种？"
+        ],
         "floor": 4
+      },
+      {
+        "id": "pre-011",
+        "difficulty": "medium",
+        "type": "open",
+        "question": "解释 LoRA 的原理、为什么它有效，以及 r 和 alpha 怎么选？",
+        "points": [
+          "原理：冻结原始权重 W，加两个低秩矩阵 A 和 B，W + A×B 近似权重更新量 ΔW；A 随机初始化、B 初始化为 0，训练只更新 A、B",
+          "为什么有效：大模型的权重更新本质上是低秩的，只有少数方向需要改变，低秩近似足够表达",
+          "r（秩）选择：一般 4~64，越大越灵活但参数越多，从 8 开始试；经验：效果不够加大 r，过拟合减小 r",
+          "alpha 选择：缩放因子，一般 alpha = r × 2，实际效果相当于把 LoRA 输出乘以 alpha/r",
+          "优势：可训练参数 0.1%~1%（r=8 时约 0.22%），省显存（约 90%），一个基座挂多个适配器切换场景快，推理可合并零延迟"
+        ],
+        "answer": [
+          "W + A×B 的低秩分解原理与初始化方式",
+          "低秩假设（权重更新本质低秩）",
+          "r/alpha 的选择方法与经验"
+        ],
+        "explanation": "原理（冻结 W + 低秩 A×B）、有效性（低秩假设）、参数选择（r 从 8 起、alpha=2r、过拟合减 r）、优势（参数占比/显存/多适配器/推理合并）四块答齐得满分。",
+        "tags": [
+          "lora",
+          "finetune",
+          "parameter-efficient"
+        ],
+        "variants": [
+          "LoRA 和全量微调各自优劣？长训练、大数据量时谁的上限更高？",
+          "一个基座挂多个 LoRA 适配器的应用场景是什么？"
+        ],
+        "floor": 3
       },
       {
         "id": "rag-001",
         "difficulty": "easy",
         "type": "single",
-        "question": "RAG 的全称是什么？核心思想是什么？",
+        "question": "生产级 RAG 常用的混合检索（Hybrid Search）由哪两种检索方式组成？",
         "options": [
-          "A. Retrieval-Augmented Generation — 检索增强生成，先搜相关文档再回答",
-          "B. Random Answer Generation — 随机答案生成",
-          "C. Reverse Attention Generation — 反向注意力生成",
-          "D. Retrieval Attention Gating — 检索注意力门控"
+          "A. 向量检索（语义相似度）+ BM25 关键词检索",
+          "B. 向量检索 + 重排模型",
+          "C. TF-IDF + 倒排索引",
+          "D. 全文检索 + 正则匹配"
         ],
         "answer": "A",
-        "explanation": "RAG = Retrieval-Augmented Generation（检索增强生成）。\n核心思想：让 LLM 在回答问题前，先从外部知识库检索相关文档/片段，\n把检索到的内容作为上下文喂给模型，再生成答案。\n解决三大问题：知识过时、幻觉、私有数据。\n",
+        "explanation": "混合检索 = 向量检索管语义 + BM25 管关键词精确匹配，互补召回后再用 RRF 融合。向量管语义泛化，BM25 管专有名词/型号的精确匹配。",
         "tags": [
           "rag",
-          "retrieval-augmented-generation"
+          "hybrid-search"
         ],
-        "related": [
-          "RAG 基础概念"
+        "variants": [
+          "向量检索和 BM25 各自擅长什么场景？",
+          "RRF 融合是怎么工作的，为什么不需要调权重？"
         ],
         "floor": 3
       },
@@ -647,21 +649,23 @@ window.QUESTION_BANKS = {
         "id": "rag-002",
         "difficulty": "easy",
         "type": "single",
-        "question": "RAG 系统通常由哪两大模块组成？",
+        "question": "企业内部知识库问答（产品文档、政策问答，需要实时更新且答案可溯源），首选哪个方案？",
         "options": [
-          "A. 索引模块 + 检索模块",
-          "B. 编码模块 + 解码模块",
-          "C. 离线索引阶段 + 在线检索生成阶段",
-          "D. 训练模块 + 推理模块"
+          "A. 全量微调",
+          "B. LoRA 微调",
+          "C. RAG",
+          "D. 纯提示词工程（不检索）"
         ],
         "answer": "C",
-        "explanation": "RAG 分两大阶段：\n1. 离线索引：文档 → 切块 → 向量化 → 存入向量数据库\n2. 在线检索生成：用户 Query → 向量化 → 检索 Top-K → 拼接 Prompt → LLM 生成\n简单说就是「先存后取」，存的时候建索引，用的时候检索+生成。\n",
+        "explanation": "知识类问题首选 RAG：加文档即更新、可引用溯源、幻觉相对可控、不需要训练数据。微调适合风格/能力/格式对齐类问题；知识更新要重新训练且无法溯源。",
         "tags": [
           "rag",
-          "pipeline"
+          "finetune",
+          "选型"
         ],
-        "related": [
-          "RAG 两阶段"
+        "variants": [
+          "RAG 和微调各自的适用场景是什么？",
+          "什么情况下 RAG 和微调结合效果最好？"
         ],
         "floor": 3
       },
@@ -669,22 +673,23 @@ window.QUESTION_BANKS = {
         "id": "rag-003",
         "difficulty": "medium",
         "type": "single",
-        "question": "向量检索中，常见的相似度度量方法不包括哪个？",
+        "question": "Reranker（重排模型）比向量检索排序更准的根本原因是什么？",
         "options": [
-          "A. 余弦相似度（Cosine Similarity）",
-          "B. 欧氏距离（L2 Distance）",
-          "C. 内积（Inner Product / Dot Product）",
-          "D. 交叉熵（Cross Entropy）"
+          "A. 重排模型的参数量更大",
+          "B. 向量检索是双塔结构，问题和文档分别编码、交互少；重排模型是单塔，问题和文档一起输入做 Cross-Attention 交互",
+          "C. 重排模型不需要向量化，所以更快",
+          "D. 重排模型能直接检索全量文档，不用先粗排"
         ],
-        "answer": "D",
-        "explanation": "常见相似度度量：\n- 余弦相似度：衡量方向差异，值域 [-1, 1]，不关心向量长度\n- 欧氏距离（L2）：衡量空间距离，值域 [0, ∞)\n- 内积/点积：考虑方向+长度，向量归一化后等价于余弦\n交叉熵是损失函数，不是相似度度量。\n",
+        "answer": "B",
+        "explanation": "向量检索是\"双塔\"（query 和 doc 分别编码再算余弦相似度），交互少所以快；重排是\"单塔\"CrossEncoder，query+doc 一起输入充分交互，更准但慢，所以只能对粗排 Top50-100 精排到 Top3-5。经典组合可提升准确率 20%+。",
         "tags": [
           "rag",
-          "vector-search",
-          "similarity"
+          "rerank",
+          "cross-encoder"
         ],
-        "related": [
-          "向量相似度"
+        "variants": [
+          "为什么重排模型不能直接用来做检索？",
+          "经典的两阶段检索流程（粗排 + 精排）是怎样的？"
         ],
         "floor": 4
       },
@@ -692,43 +697,47 @@ window.QUESTION_BANKS = {
         "id": "rag-004",
         "difficulty": "medium",
         "type": "single",
-        "question": "RAG 中「Chunking（文档切块）」策略对效果影响很大，以下哪种说法是错误的？",
+        "question": "关于 Function Calling 和 MCP 的关系，下列说法正确的是？",
         "options": [
-          "A. 块太小会导致语义不完整，影响回答质量",
-          "B. 块越大越好，信息越全回答越准",
-          "C. 常用的切块方法有固定长度、按句子/段落、语义切块",
-          "D. 块大小要结合 Embedding 模型的最大上下文来选"
+          "A. 两者是同一件事，只是叫法不同",
+          "B. Function Calling 是模型的基础能力（按 JSON Schema 输出结构化调用参数），MCP 是工具标准化接入协议（工具发现/调用/返回），属于不同层级",
+          "C. MCP 是模型能力，Function Calling 是工具生态协议",
+          "D. Function Calling 是 Anthropic 提出的，MCP 是 OpenAI 提出的"
         ],
         "answer": "B",
-        "explanation": "块不是越大越好。太大的问题：\n1. 单块信息密度低，检索噪音大，引入无关内容\n2. 超过 Embedding 模型最大输入长度会被截断\n3. 拼接进 Prompt 时占 token 多，能放的块数少\n一般 512~1024 token 比较常见，要根据场景调。\n",
+        "explanation": "Function Calling 定义\"模型怎么说要调用工具\"（协议层，OpenAI 先做）；MCP 定义\"工具怎么提供给模型\"（更上层的工具生态协议，JSON-RPC/stdio，Anthropic 提出）。类比：FC 是\"电\"，MCP 是\"插座标准\"。",
         "tags": [
-          "rag",
-          "chunking"
+          "agent",
+          "function-calling",
+          "mcp"
         ],
-        "related": [
-          "文档切块策略"
+        "variants": [
+          "没有 Function Calling，MCP 还能工作吗？",
+          "MCP 给工具接入带来了什么好处（一次接入到处可用）？"
         ],
         "floor": 4
       },
       {
         "id": "rag-005",
-        "difficulty": "medium",
+        "difficulty": "hard",
         "type": "single",
-        "question": "以下哪个不是 RAG 常见的优化方向？",
+        "question": "约束解码（guided_json）能保证工具调用参数 100% 符合 JSON Schema，其核心原理是？",
         "options": [
-          "A. 混合检索（关键词 + 向量）",
-          "B. 重排序（Reranking）",
-          "C. 查询改写（Query Rewriting）",
-          "D. 增加模型参数量"
+          "A. 生成完成后用正则校验，不合格就重试",
+          "B. 生成每一步根据当前解析状态计算合法 token 集合，把不合法 token 的概率设为 -inf，模型只能从合法 token 里选",
+          "C. 用参数量更小的模型来生成 JSON",
+          "D. 在 system prompt 里反复强调必须输出合法 JSON"
         ],
-        "answer": "D",
-        "explanation": "RAG 优化方向：\n- 混合检索：BM25 关键词 + 向量检索互补，解决字面匹配问题\n- 重排序：用 Cross-Encoder 对初筛结果重新排序，更精准\n- 查询改写：用 LLM 把用户问题扩展/改写，提高召回率\n- 增加模型参数是提升 LLM 本身，不算 RAG 特定优化。\n",
+        "answer": "B",
+        "explanation": "约束解码在采样时做语法约束：根据已生成内容的解析状态，实时计算\"下一个 token 可以是哪些\"，把不合法的概率置为 -inf。Schema 通过率从 60-80% 提升到 100%，推理速度影响 <5%，vLLM / llama.cpp 都支持。",
         "tags": [
-          "rag",
-          "optimization"
+          "agent",
+          "guided-json",
+          "约束解码"
         ],
-        "related": [
-          "RAG 优化"
+        "variants": [
+          "约束解码对推理速度影响大吗？",
+          "哪些场景适合用约束解码？"
         ],
         "floor": 4
       },
@@ -736,142 +745,209 @@ window.QUESTION_BANKS = {
         "id": "rag-006",
         "difficulty": "medium",
         "type": "single",
-        "question": "Agent（智能体）和 RAG 的主要区别是什么？",
+        "question": "生产级 RAG 对检索质量要求高时（如技术文档问答），推荐哪种分块策略？",
         "options": [
-          "A. Agent 更贵，RAG 更便宜",
-          "B. RAG 只是检索+生成，Agent 有规划、工具调用、反思的闭环",
-          "C. Agent 用的模型更大",
-          "D. 两者是一回事，只是名字不同"
+          "A. 固定大小分块（按 token 数一刀切）",
+          "B. 父子块：小 chunk 检索，命中后返回父 chunk 给 LLM",
+          "C. 不切块，整篇文档作为一个块",
+          "D. 按随机长度切分"
         ],
         "answer": "B",
-        "explanation": "RAG = 检索 + 生成（被动调用，一次完成）\nAgent = 感知 + 规划 + 工具调用 + 反思的多轮闭环（主动决策）\n\nAgent 核心能力：\n1. 规划（Plan）：拆解复杂任务\n2. 工具使用（Tool Use）：调用搜索/代码/API\n3. 记忆（Memory）：短期+长期记忆\n4. 反思（Reflection）：自我纠错\nRAG 可以是 Agent 的一个工具。\n",
+        "explanation": "父子块兼顾检索精度和上下文完整：小块命中精准，返回大块给 LLM 保证生成上下文完整，是生产级推荐；固定分块简单但语义可能被切断，准确率比语义/父子块低 15%+。",
         "tags": [
-          "agent",
-          "rag"
+          "rag",
+          "chunking"
         ],
-        "related": [
-          "Agent vs RAG"
+        "variants": [
+          "固定大小分块有什么缺点？",
+          "文档结构清晰时，语义分块和固定分块怎么选？"
         ],
         "floor": 4
       },
       {
         "id": "rag-007",
-        "difficulty": "medium",
-        "type": "single",
-        "question": "ReAct 框架的核心思想是什么？",
-        "options": [
-          "A. 只思考不行动",
-          "B. 只行动不思考",
-          "C. 推理（Reasoning）和行动（Acting）交替进行，边想边做",
-          "D. 先做完全部推理再行动"
-        ],
-        "answer": "C",
-        "explanation": "ReAct = Reasoning + Acting\n核心：让 LLM 交替生成「思考过程」和「行动」，\n每一步先想（推理为什么要做），再做（调用工具），\n再观察结果，再思考下一步... 形成闭环。\n这样模型的决策过程可解释，也能通过工具获取实时信息。\n",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "RAG 幻觉控制中，\"检索内容相关性低时主动拒绝回答（如回复'资料中未找到相关内容'）\"是一种合理的控制手段。",
+        "answer": true,
+        "explanation": "这是幻觉控制三件套之一（低置信度主动拒绝）：重排分数低于阈值就不硬答，避免模型基于不相关内容编造答案。",
         "tags": [
-          "agent",
-          "react"
+          "rag",
+          "hallucination"
         ],
-        "related": [
-          "ReAct 框架"
+        "variants": [
+          "幻觉控制的三件套具体是哪三件？",
+          "除了三件套，还有哪些进阶的幻觉控制手段？"
         ],
-        "floor": 4
+        "floor": 3
       },
       {
         "id": "rag-008",
-        "difficulty": "hard",
-        "type": "single",
-        "question": "关于推理时计算量优化，以下哪种方法是「投机采样（Speculative Decoding）」的核心思路？",
-        "options": [
-          "A. 用小模型快速猜几个 token，大模型验证，对的就直接跳过",
-          "B. 减少模型层数",
-          "C. 用量化降低精度",
-          "D. 用更短的 Prompt"
-        ],
-        "answer": "A",
-        "explanation": "投机采样核心：用一个小模型（草稿模型）快速生成多个候选 token，\n然后用大模型并行验证（一次前向），猜对的 token 直接接受，\n猜错的从第一个错的地方重新生成。\n本质是用小模型的算力换大模型的解码步数，\n速度提升 2~3 倍，输出分布完全不变。\n",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "对于\"EDS v3.8.2 新增了什么功能\"这类含产品型号的查询，纯向量检索通常比 BM25 关键词检索匹配得更精确。",
+        "answer": false,
+        "explanation": "向量检索擅长语义匹配，但对专有名词/精确术语/产品型号的字符串匹配不如 BM25。BM25 能精确匹配\"EDS v3.8.2\"，纯向量可能召回语义相近但型号不对的内容——这正是要用混合检索的原因。",
         "tags": [
-          "inference",
-          "speculative-decoding",
-          "optimization"
+          "rag",
+          "hybrid-search",
+          "bm25"
         ],
-        "related": [
-          "投机采样"
+        "variants": [
+          "举一个向量检索会翻车、BM25 更准的查询例子？",
+          "混合检索的结果是怎么融合排序的？"
         ],
-        "floor": 4
+        "floor": 3
       },
       {
         "id": "rag-009",
         "difficulty": "medium",
-        "type": "single",
-        "question": "KV Cache 的作用是什么？",
-        "options": [
-          "A. 缓存模型权重，加快加载",
-          "B. 缓存已生成 token 的 Key 和 Value，避免重复计算",
-          "C. 缓存用户的历史对话",
-          "D. 缓存数据库查询结果"
-        ],
-        "answer": "B",
-        "explanation": "KV Cache：自回归生成时，每生成一个新 token，\n之前所有 token 的 K 和 V 都是不变的（因为注意力计算只依赖已有 token）。\n把它们缓存下来，下一步只算新 token 的 KV，\n不用重新算整个序列的，大幅减少计算量。\n这是推理加速的基础优化，所有框架都默认开。\n",
+        "type": "boolean",
+        "question": "ReAct 循环中，只要工具足够多、模型足够强，就不需要设置最大步数限制。",
+        "answer": false,
+        "explanation": "最大步数是防死循环最兜底的硬限制，必须有。此外还要配合重复 Action 检测（同样工具同样参数连续调用则打断）、Observation 质量监控（无新信息时提示换方法）、反思机制（多步无进展时停下反思）。",
         "tags": [
-          "inference",
-          "kv-cache",
-          "optimization"
+          "agent",
+          "react",
+          "死循环"
         ],
-        "related": [
-          "KV Cache"
+        "variants": [
+          "Agent 循环的终止条件有哪些？",
+          "检测到 Agent 死循环时，有哪些处理手段？"
         ],
         "floor": 4
       },
       {
         "id": "rag-010",
         "difficulty": "hard",
-        "type": "single",
-        "question": "关于模型量化，以下哪个说法是正确的？",
-        "options": [
-          "A. 量化一定会显著降低模型效果",
-          "B. GGUF 是一种量化格式，主要用于 llama.cpp",
-          "C. 4bit 量化就是把模型缩小到原来的 1/4，速度也是 4 倍",
-          "D. 量化只影响显存，不影响推理速度"
+        "type": "open",
+        "question": "请完整描述一个生产级 RAG 系统的流程（离线索引 + 在线检索两阶段），并说明各环节的作用。",
+        "points": [
+          "离线索引阶段：文档清洗 → 分块 → 向量化 → 存入向量库 + 建 BM25 索引（清洗去噪音、分块控制检索粒度、向量化便于相似度计算）",
+          "在线检索阶段：用户问题 → 查询改写 → 混合检索（向量 + BM25）→ RRF 融合 → 重排 → 上下文组装 → LLM 生成答案",
+          "至少讲清 3 个环节的作用：分块（太大不精确、太小没上下文）、混合检索（语义 + 关键词互补）、重排（粗排 Top50 精排 Top5）、上下文组装（拼 prompt）、生成（基于上下文回答）",
+          "加分项：幻觉控制（只基于上下文回答 + 引用溯源 + 低置信度拒绝）或评估体系（Hit Rate@K / MRR + RAGAS）"
         ],
-        "answer": "B",
-        "explanation": "GGUF（GPT-Generated Unified Format）是 llama.cpp 推出的格式，\n支持多种量化精度（Q4_K_M, Q5_K_M, Q8_0 等），是本地推理的主流格式。\nA 错：4bit/8bit 在大模型上感知不明显，AWQ/GPTQ 质量很好。\nC 错：显存省 4 倍，但速度不是 4 倍（计算密度 + 访存瓶颈）。\nD 错：量化也能加速（计算量减少 + 访存减少）。\n",
+        "answer": [
+          "离线：清洗 → 分块 → 向量化 → 向量库 + BM25 索引",
+          "在线：查询改写 → 混合检索 → RRF → 重排 → 组装上下文 → LLM 生成"
+        ],
+        "explanation": "两阶段缺一不可：离线建好索引，在线才能检索。重点考察分块、混合检索、重排的作用，能补上幻觉控制和评估体系说明才是真懂生产落地。",
         "tags": [
-          "inference",
-          "quantization",
-          "gguf"
+          "rag",
+          "全流程"
         ],
-        "related": [
-          "模型量化"
+        "variants": [
+          "分块大小对检索效果有什么影响？",
+          "怎么评估一个 RAG 系统的效果（三层评估体系）？",
+          "如果检索准确率上不去，你会从哪些方向排查？"
         ],
         "floor": 4
       },
       {
-        "id": "rag-boss-1",
-        "difficulty": "hard",
+        "id": "rag-011",
+        "difficulty": "medium",
         "type": "open",
-        "question": "请简述一个完整的 RAG 系统从文档接入到用户问答的完整流程，并说明至少 3 个关键优化点及其作用。",
-        "answer": [
-          "文档接入清洗预处理去重",
-          "文档切块Chunking策略",
-          "向量化Embedding模型生成向量",
-          "存入向量数据库建立索引",
-          "用户查询Query向量化",
-          "向量检索召回TopK相关片段",
-          "混合检索关键词BM25向量互补",
-          "重排序Reranker精排提高精度",
-          "拼接Prompt上下文LLM生成答案",
-          "查询改写Query Rewriting扩展召回",
-          "分块策略影响语义完整性召回率"
+        "question": "为什么要用混合检索？只用向量检索不行吗？",
+        "points": [
+          "向量检索擅长语义匹配（同义改写、模糊表达），但对专有名词/精确术语/产品型号的精确匹配弱",
+          "BM25 擅长精确字符串匹配（如 EDS v3.8.2），但缺乏语义泛化能力",
+          "两者互补：混合检索同时召回语义相关和精确命中的内容，召回更全更准",
+          "融合方式：RRF（Reciprocal Rank Fusion）按排名倒数加权，无需调权重、鲁棒性好",
+          "结论：生产级 RAG 基本都是混合检索，纯向量准确率不够"
         ],
-        "explanation": "RAG 完整流程：\n1. 离线阶段：文档采集 → 清洗/去重 → 切块（Chunking）→ Embedding 向量化 → 存入向量库\n2. 在线阶段：用户 Query → 向量化 → 检索 Top-K →（可选：重排序）→ 拼接到 Prompt → LLM 生成\n\n关键优化点：\n- 混合检索：BM25 + 向量，解决字面匹配和语义匹配互补\n- 重排序（Rerank）：初筛召回多一些，用 Cross-Encoder 精排，精准度大幅提升\n- 查询改写：用 LLM 扩展/改写用户问题，提高召回率（尤其针对短查询）\n- 文档切块：按语义切块优于固定长度，保证块内语义完整\n- 父文档检索：检索小块，返回父块，保证上下文完整\n",
+        "answer": [
+          "向量管语义、BM25 管精确匹配，互补",
+          "用 RRF 融合，是生产级标配"
+        ],
+        "explanation": "核心是讲清\"互补\"：向量解决\"意思相近\"，BM25 解决\"字符串完全一致\"。能举出型号/专有名词的例子（如 EDS v3.8.2）加分。",
         "tags": [
           "rag",
-          "pipeline",
-          "optimization",
-          "boss"
+          "hybrid-search"
         ],
-        "min_keywords": 5,
+        "variants": [
+          "RRF 融合和加权分数融合（如 0.5×向量 + 0.5×BM25）相比有什么优势？",
+          "什么场景下纯向量检索就够用？"
+        ],
         "floor": 4
+      },
+      {
+        "id": "rag-012",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "RAG 场景下怎么控制幻觉？请给出三层控制手段并说明原理。",
+        "points": [
+          "第一层 Prompt 约束：明确要求只能基于检索上下文回答，上下文里没有的就说不知道",
+          "第二层 答案溯源：每个结论标注引用编号 [1][2] 并可跳到原文，用户可验证，模型有引用约束也不容易瞎编",
+          "第三层 低置信度主动拒绝：重排分数低于阈值时回复\"资料中未找到相关内容\"，不硬答",
+          "进阶手段：让模型先在上下文找证据再组织答案（CoT for RAG）、Self-check（生成后自查）、多轮追问验证",
+          "加分项：给出实测效果（如 Faithfulness 0.85+）"
+        ],
+        "answer": [
+          "Prompt 约束（只能基于上下文回答）",
+          "引用溯源 [1][2]",
+          "低置信度主动拒绝"
+        ],
+        "explanation": "三层是 Prompt 约束 → 引用溯源 → 主动拒绝，层层兜底。能补进阶手段（CoT/Self-check）和量化指标（Faithfulness）说明有落地经验。",
+        "tags": [
+          "rag",
+          "hallucination"
+        ],
+        "variants": [
+          "为什么\"引用溯源\"本身就能降低幻觉？",
+          "Faithfulness 指标衡量的是什么？怎么评估？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "rag-013",
+        "difficulty": "medium",
+        "type": "open",
+        "question": "请描述 ReAct 范式，说明 Thought-Action-Observation 循环是怎么工作的，以及循环如何终止。",
+        "points": [
+          "ReAct = Reasoning + Acting，推理与行动交替进行",
+          "循环过程：Thought（想清楚下一步要做什么）→ Action（调用工具并给出参数）→ Observation（拿到工具返回结果）→ 再 Thought…直到得出答案 → Final Answer",
+          "为什么有效：走一步看一步、不一次性编完；每一步都能拿到外部信息，不会瞎编；Thought 全程可见、可审计、可 debug",
+          "终止条件：任务完成（输出 Final Answer）/ 达到最大步数 / 工具连续调用失败 / 模型主动放弃",
+          "加分项：防死循环手段（重复 Action 检测、Observation 质量监控、反思机制）"
+        ],
+        "answer": [
+          "Thought → Action → Observation 循环",
+          "直到 Final Answer 或触发终止条件"
+        ],
+        "explanation": "核心是讲清循环结构和\"为什么有效\"（外部信息 + 可审计）。终止条件是工程落地的关键，能答出最大步数硬限制和防死循环手段得满分。",
+        "tags": [
+          "agent",
+          "react"
+        ],
+        "variants": [
+          "ReAct 和\"一次性直接给答案\"相比，优势是什么？",
+          "工具调用失败了，ReAct 循环应该怎么处理？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "rag-014",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "Agent 的四层记忆中，负责\"模糊检索、语义搜索（'好像在哪看过'）\"的是哪一层？",
+        "options": [
+          "A. 工作记忆（当前对话上下文）",
+          "B. 短期记忆（SQLite 等数据库，存最近 N 轮）",
+          "C. 长期记忆（Markdown 文档，存重要知识/偏好）",
+          "D. 语义记忆（向量库 + 全文检索）"
+        ],
+        "answer": "D",
+        "explanation": "四层记忆：工作记忆（当前对话，短期临时）、短期记忆（SQLite，最近几轮）、长期记忆（Markdown，重要知识/偏好）、语义记忆（向量库+全文检索，模糊语义召回）。核心机制还有 Memory Flush（对话结束把工作记忆里的重要信息写入长期记忆）和 Compaction（条目 >50 自动合并精简，防止无限膨胀）。",
+        "tags": [
+          "agent",
+          "memory"
+        ],
+        "variants": [
+          "Memory Flush 和 Compaction 分别解决什么问题？",
+          "四层记忆分别用什么存储？为什么这么分层？"
+        ],
+        "floor": 3
       },
       {
         "id": "dist-001",

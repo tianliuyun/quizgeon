@@ -1,0 +1,211 @@
+# RAG 与 Agent 题库（考核体系 V1）
+# 题型：single（单选）/ boolean（判断）/ open（简答，得分点判分）
+# 来源：高频面试题 11-25（RAG 8 题 + Agent 7 题）+ week18 总复习速查卡
+- id: rag-001
+  difficulty: easy
+  type: single
+  question: 生产级 RAG 常用的混合检索（Hybrid Search）由哪两种检索方式组成？
+  options:
+    - A. 向量检索（语义相似度）+ BM25 关键词检索
+    - B. 向量检索 + 重排模型
+    - C. TF-IDF + 倒排索引
+    - D. 全文检索 + 正则匹配
+  answer: A
+  explanation: 混合检索 = 向量检索管语义 + BM25 管关键词精确匹配，互补召回后再用 RRF 融合。向量管语义泛化，BM25 管专有名词/型号的精确匹配。
+  tags: [rag, hybrid-search]
+  variants:
+    - 向量检索和 BM25 各自擅长什么场景？
+    - RRF 融合是怎么工作的，为什么不需要调权重？
+- id: rag-002
+  difficulty: easy
+  type: single
+  question: 企业内部知识库问答（产品文档、政策问答，需要实时更新且答案可溯源），首选哪个方案？
+  options:
+    - A. 全量微调
+    - B. LoRA 微调
+    - C. RAG
+    - D. 纯提示词工程（不检索）
+  answer: C
+  explanation: 知识类问题首选 RAG：加文档即更新、可引用溯源、幻觉相对可控、不需要训练数据。微调适合风格/能力/格式对齐类问题；知识更新要重新训练且无法溯源。
+  tags: [rag, finetune, 选型]
+  variants:
+    - RAG 和微调各自的适用场景是什么？
+    - 什么情况下 RAG 和微调结合效果最好？
+- id: rag-003
+  difficulty: medium
+  type: single
+  question: Reranker（重排模型）比向量检索排序更准的根本原因是什么？
+  options:
+    - A. 重排模型的参数量更大
+    - B. 向量检索是双塔结构，问题和文档分别编码、交互少；重排模型是单塔，问题和文档一起输入做 Cross-Attention 交互
+    - C. 重排模型不需要向量化，所以更快
+    - D. 重排模型能直接检索全量文档，不用先粗排
+  answer: B
+  explanation: 向量检索是"双塔"（query 和 doc 分别编码再算余弦相似度），交互少所以快；重排是"单塔"CrossEncoder，query+doc 一起输入充分交互，更准但慢，所以只能对粗排 Top50-100 精排到 Top3-5。经典组合可提升准确率 20%+。
+  tags: [rag, rerank, cross-encoder]
+  variants:
+    - 为什么重排模型不能直接用来做检索？
+    - 经典的两阶段检索流程（粗排 + 精排）是怎样的？
+- id: rag-004
+  difficulty: medium
+  type: single
+  question: 关于 Function Calling 和 MCP 的关系，下列说法正确的是？
+  options:
+    - A. 两者是同一件事，只是叫法不同
+    - B. Function Calling 是模型的基础能力（按 JSON Schema 输出结构化调用参数），MCP 是工具标准化接入协议（工具发现/调用/返回），属于不同层级
+    - C. MCP 是模型能力，Function Calling 是工具生态协议
+    - D. Function Calling 是 Anthropic 提出的，MCP 是 OpenAI 提出的
+  answer: B
+  explanation: Function Calling 定义"模型怎么说要调用工具"（协议层，OpenAI 先做）；MCP 定义"工具怎么提供给模型"（更上层的工具生态协议，JSON-RPC/stdio，Anthropic 提出）。类比：FC 是"电"，MCP 是"插座标准"。
+  tags: [agent, function-calling, mcp]
+  variants:
+    - 没有 Function Calling，MCP 还能工作吗？
+    - MCP 给工具接入带来了什么好处（一次接入到处可用）？
+- id: rag-005
+  difficulty: hard
+  type: single
+  question: 约束解码（guided_json）能保证工具调用参数 100% 符合 JSON Schema，其核心原理是？
+  options:
+    - A. 生成完成后用正则校验，不合格就重试
+    - B. 生成每一步根据当前解析状态计算合法 token 集合，把不合法 token 的概率设为 -inf，模型只能从合法 token 里选
+    - C. 用参数量更小的模型来生成 JSON
+    - D. 在 system prompt 里反复强调必须输出合法 JSON
+  answer: B
+  explanation: 约束解码在采样时做语法约束：根据已生成内容的解析状态，实时计算"下一个 token 可以是哪些"，把不合法的概率置为 -inf。Schema 通过率从 60-80% 提升到 100%，推理速度影响 <5%，vLLM / llama.cpp 都支持。
+  tags: [agent, guided-json, 约束解码]
+  variants:
+    - 约束解码对推理速度影响大吗？
+    - 哪些场景适合用约束解码？
+- id: rag-006
+  difficulty: medium
+  type: single
+  question: 生产级 RAG 对检索质量要求高时（如技术文档问答），推荐哪种分块策略？
+  options:
+    - A. 固定大小分块（按 token 数一刀切）
+    - B. 父子块：小 chunk 检索，命中后返回父 chunk 给 LLM
+    - C. 不切块，整篇文档作为一个块
+    - D. 按随机长度切分
+  answer: B
+  explanation: 父子块兼顾检索精度和上下文完整：小块命中精准，返回大块给 LLM 保证生成上下文完整，是生产级推荐；固定分块简单但语义可能被切断，准确率比语义/父子块低 15%+。
+  tags: [rag, chunking]
+  variants:
+    - 固定大小分块有什么缺点？
+    - 文档结构清晰时，语义分块和固定分块怎么选？
+- id: rag-007
+  difficulty: easy
+  type: boolean
+  question: RAG 幻觉控制中，"检索内容相关性低时主动拒绝回答（如回复'资料中未找到相关内容'）"是一种合理的控制手段。
+  answer: true
+  explanation: 这是幻觉控制三件套之一（低置信度主动拒绝）：重排分数低于阈值就不硬答，避免模型基于不相关内容编造答案。
+  tags: [rag, hallucination]
+  variants:
+    - 幻觉控制的三件套具体是哪三件？
+    - 除了三件套，还有哪些进阶的幻觉控制手段？
+- id: rag-008
+  difficulty: easy
+  type: boolean
+  question: 对于"EDS v3.8.2 新增了什么功能"这类含产品型号的查询，纯向量检索通常比 BM25 关键词检索匹配得更精确。
+  answer: false
+  explanation: 向量检索擅长语义匹配，但对专有名词/精确术语/产品型号的字符串匹配不如 BM25。BM25 能精确匹配"EDS v3.8.2"，纯向量可能召回语义相近但型号不对的内容——这正是要用混合检索的原因。
+  tags: [rag, hybrid-search, bm25]
+  variants:
+    - 举一个向量检索会翻车、BM25 更准的查询例子？
+    - 混合检索的结果是怎么融合排序的？
+- id: rag-009
+  difficulty: medium
+  type: boolean
+  question: ReAct 循环中，只要工具足够多、模型足够强，就不需要设置最大步数限制。
+  answer: false
+  explanation: 最大步数是防死循环最兜底的硬限制，必须有。此外还要配合重复 Action 检测（同样工具同样参数连续调用则打断）、Observation 质量监控（无新信息时提示换方法）、反思机制（多步无进展时停下反思）。
+  tags: [agent, react, 死循环]
+  variants:
+    - Agent 循环的终止条件有哪些？
+    - 检测到 Agent 死循环时，有哪些处理手段？
+- id: rag-010
+  difficulty: hard
+  type: open
+  question: 请完整描述一个生产级 RAG 系统的流程（离线索引 + 在线检索两阶段），并说明各环节的作用。
+  points:
+    - 离线索引阶段：文档清洗 → 分块 → 向量化 → 存入向量库 + 建 BM25 索引（清洗去噪音、分块控制检索粒度、向量化便于相似度计算）
+    - 在线检索阶段：用户问题 → 查询改写 → 混合检索（向量 + BM25）→ RRF 融合 → 重排 → 上下文组装 → LLM 生成答案
+    - 至少讲清 3 个环节的作用：分块（太大不精确、太小没上下文）、混合检索（语义 + 关键词互补）、重排（粗排 Top50 精排 Top5）、上下文组装（拼 prompt）、生成（基于上下文回答）
+    - 加分项：幻觉控制（只基于上下文回答 + 引用溯源 + 低置信度拒绝）或评估体系（Hit Rate@K / MRR + RAGAS）
+  answer:
+    - 离线：清洗 → 分块 → 向量化 → 向量库 + BM25 索引
+    - 在线：查询改写 → 混合检索 → RRF → 重排 → 组装上下文 → LLM 生成
+  explanation: 两阶段缺一不可：离线建好索引，在线才能检索。重点考察分块、混合检索、重排的作用，能补上幻觉控制和评估体系说明才是真懂生产落地。
+  tags: [rag, 全流程]
+  variants:
+    - 分块大小对检索效果有什么影响？
+    - 怎么评估一个 RAG 系统的效果（三层评估体系）？
+    - 如果检索准确率上不去，你会从哪些方向排查？
+- id: rag-011
+  difficulty: medium
+  type: open
+  question: 为什么要用混合检索？只用向量检索不行吗？
+  points:
+    - 向量检索擅长语义匹配（同义改写、模糊表达），但对专有名词/精确术语/产品型号的精确匹配弱
+    - BM25 擅长精确字符串匹配（如 EDS v3.8.2），但缺乏语义泛化能力
+    - 两者互补：混合检索同时召回语义相关和精确命中的内容，召回更全更准
+    - 融合方式：RRF（Reciprocal Rank Fusion）按排名倒数加权，无需调权重、鲁棒性好
+    - 结论：生产级 RAG 基本都是混合检索，纯向量准确率不够
+  answer:
+    - 向量管语义、BM25 管精确匹配，互补
+    - 用 RRF 融合，是生产级标配
+  explanation: 核心是讲清"互补"：向量解决"意思相近"，BM25 解决"字符串完全一致"。能举出型号/专有名词的例子（如 EDS v3.8.2）加分。
+  tags: [rag, hybrid-search]
+  variants:
+    - RRF 融合和加权分数融合（如 0.5×向量 + 0.5×BM25）相比有什么优势？
+    - 什么场景下纯向量检索就够用？
+- id: rag-012
+  difficulty: hard
+  type: open
+  question: RAG 场景下怎么控制幻觉？请给出三层控制手段并说明原理。
+  points:
+    - 第一层 Prompt 约束：明确要求只能基于检索上下文回答，上下文里没有的就说不知道
+    - 第二层 答案溯源：每个结论标注引用编号 [1][2] 并可跳到原文，用户可验证，模型有引用约束也不容易瞎编
+    - 第三层 低置信度主动拒绝：重排分数低于阈值时回复"资料中未找到相关内容"，不硬答
+    - 进阶手段：让模型先在上下文找证据再组织答案（CoT for RAG）、Self-check（生成后自查）、多轮追问验证
+    - 加分项：给出实测效果（如 Faithfulness 0.85+）
+  answer:
+    - Prompt 约束（只能基于上下文回答）
+    - 引用溯源 [1][2]
+    - 低置信度主动拒绝
+  explanation: 三层是 Prompt 约束 → 引用溯源 → 主动拒绝，层层兜底。能补进阶手段（CoT/Self-check）和量化指标（Faithfulness）说明有落地经验。
+  tags: [rag, hallucination]
+  variants:
+    - 为什么"引用溯源"本身就能降低幻觉？
+    - Faithfulness 指标衡量的是什么？怎么评估？
+- id: rag-013
+  difficulty: medium
+  type: open
+  question: 请描述 ReAct 范式，说明 Thought-Action-Observation 循环是怎么工作的，以及循环如何终止。
+  points:
+    - ReAct = Reasoning + Acting，推理与行动交替进行
+    - 循环过程：Thought（想清楚下一步要做什么）→ Action（调用工具并给出参数）→ Observation（拿到工具返回结果）→ 再 Thought…直到得出答案 → Final Answer
+    - 为什么有效：走一步看一步、不一次性编完；每一步都能拿到外部信息，不会瞎编；Thought 全程可见、可审计、可 debug
+    - 终止条件：任务完成（输出 Final Answer）/ 达到最大步数 / 工具连续调用失败 / 模型主动放弃
+    - 加分项：防死循环手段（重复 Action 检测、Observation 质量监控、反思机制）
+  answer:
+    - Thought → Action → Observation 循环
+    - 直到 Final Answer 或触发终止条件
+  explanation: 核心是讲清循环结构和"为什么有效"（外部信息 + 可审计）。终止条件是工程落地的关键，能答出最大步数硬限制和防死循环手段得满分。
+  tags: [agent, react]
+  variants:
+    - ReAct 和"一次性直接给答案"相比，优势是什么？
+    - 工具调用失败了，ReAct 循环应该怎么处理？
+- id: rag-014
+  difficulty: easy
+  type: single
+  question: Agent 的四层记忆中，负责"模糊检索、语义搜索（'好像在哪看过'）"的是哪一层？
+  options:
+    - A. 工作记忆（当前对话上下文）
+    - B. 短期记忆（SQLite 等数据库，存最近 N 轮）
+    - C. 长期记忆（Markdown 文档，存重要知识/偏好）
+    - D. 语义记忆（向量库 + 全文检索）
+  answer: D
+  explanation: 四层记忆：工作记忆（当前对话，短期临时）、短期记忆（SQLite，最近几轮）、长期记忆（Markdown，重要知识/偏好）、语义记忆（向量库+全文检索，模糊语义召回）。核心机制还有 Memory Flush（对话结束把工作记忆里的重要信息写入长期记忆）和 Compaction（条目 >50 自动合并精简，防止无限膨胀）。
+  tags: [agent, memory]
+  variants:
+    - Memory Flush 和 Compaction 分别解决什么问题？
+    - 四层记忆分别用什么存储？为什么这么分层？

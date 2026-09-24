@@ -1,267 +1,165 @@
+# 预训练与微调全流程题库（考核体系 V1）
+# 题型：single（单选）/ boolean（判断）/ open（简答，得分点判分）
+# 来源：速查卡 02-预训练与微调全流程 + 高频面试题 5/6/2
 - id: pre-001
   difficulty: easy
   type: single
-  question: 从原始文本到一个能对话的 AI 助手，大模型训练的四阶段正确顺序是？
+  question: 关于预训练、SFT、RLHF 三阶段的关系，说法正确的是？
   options:
-  - A. 预训练 → SFT → 数据准备 → 对齐
-  - B. 数据准备 → 预训练 → SFT → 对齐
-  - C. SFT → 预训练 → 对齐 → 数据准备
-  - D. 数据准备 → 对齐 → 预训练 → SFT
+    - A. 预训练用几万条指令数据，SFT 用万亿 token 互联网文本
+    - B. 预训练给知识、SFT 给格式、对齐给价值观，数据量递减、主观度递增
+    - C. 三个阶段训练目标相同，只是数据量不同
+    - D. 对齐（RLHF）在预训练之前进行
   answer: B
-  explanation: '四阶段：数据准备（清洗去重分词）→ 预训练（下一词预测，获得语言能力）
-
-    → SFT 监督微调（学会按指令回答）→ 对齐（RLHF/DPO/GRPO，符合人类偏好）。
-
-    口诀：预训练给知识，SFT 给格式，对齐给价值观。
-
-    '
-  tags:
-  - pretrain
-  - sft
-  - rlhf
-  related:
-  - 训练四阶段
+  explanation: 预训练用海量互联网文本（万亿 token）学语言和世界知识；SFT 用几万~几十万条指令数据学按指令回答；对齐用人类偏好数据让输出符合有用/无害/诚实。口诀：预训练给知识，SFT 给格式，对齐给价值观。数据量递减、主观度递增，顺序不能乱。
+  tags: [pretrain, sft, rlhf, pipeline]
+  variants:
+    - 每个阶段分别用什么数据、训练目标是什么？
+    - Base Model / SFT Model / Chat Model 分别对应哪个阶段？
 - id: pre-002
   difficulty: easy
   type: single
-  question: SFT（监督微调）中，为什么要使用 Label Mask（只在 assistant 部分算 loss）？
+  question: SFT 训练时，为什么把对话中 user 部分的 labels 设为 -100？
   options:
-  - A. 减少显存占用
-  - B. 让模型学会「如何回答」，而不是背熟用户的问题
-  - C. 加快训练速度
-  - D. 防止过拟合
+    - A. 让模型学会复述用户的问题
+    - B. 只想让模型学会「如何回答」，不需要背熟用户提问，-100 让交叉熵自动忽略该部分
+    - C. 减少训练数据量，加快训练
+    - D. 防止梯度爆炸
   answer: B
-  explanation: '对话数据格式：<|user|>问题<|assistant|>回答
-
-    user 部分 labels 设为 -100（不计算 loss），只让 assistant 部分参与训练。
-
-    目的：只想让模型学会「如何回答问题」，不需要背熟用户的提问。
-
-    '
-  tags:
-  - sft
-  - label-mask
-  related:
-  - SFT 监督微调
-  - Label Mask
+  explanation: 对话数据形如 <|user|>问题<|assistant|>回答，把 user 部分 labels 设为 -100，交叉熵自动忽略、不计算 loss。目的是让模型只学会如何回答问题，而不是背熟用户的问题。这就是 Label Mask 技巧。
+  tags: [sft, label-mask]
+  variants:
+    - -100 在交叉熵计算里具体是怎么起作用的？
+    - 如果 user 部分也算 loss，模型会学到什么不好的东西？
 - id: pre-003
   difficulty: medium
   type: single
-  question: PPO 强化学习训练时，显存里同时有几个模型？
+  question: LoRA 用 W + A×B 近似权重更新，为什么 B 初始化为 0、A 随机初始化？
   options:
-  - A. 2 个（Actor + Critic）
-  - B. 3 个（Actor + Critic + RM）
-  - C. 4 个（Actor + Critic + RM + Reference）
-  - D. 1 个（Actor 兼任所有角色）
-  answer: C
-  explanation: 'PPO 四模型：
-
-    1. Actor（训练中，生成回答）
-
-    2. Critic（训练中，估计 V(s)，算 Advantage）
-
-    3. Reward Model（冻结，给回答打分）
-
-    4. Reference Model（冻结，算 KL 散度防漂移）
-
-    2 个训练 + 2 个冻结。
-
-    '
-  tags:
-  - ppo
-  - rlhf
-  related:
-  - PPO 四模型
+    - A. 让训练收敛更快
+    - B. 初始时 A×B=0，输出与冻结的原模型完全一致，微调从原模型能力出发，训练稳定
+    - C. 减少可训练参数量
+    - D. 避免过拟合
+  answer: B
+  explanation: B 初始化为 0 则 ΔW = A×B = 0，初始输出与冻结的原模型完全一致，微调从原模型已有能力出发，训练稳定。如果 A、B 都随机初始化，一开始就扰动输出，容易破坏模型已学到的能力。
+  tags: [lora, finetune]
+  variants:
+    - 推理时为什么可以把 A×B 合并回 W，实现零额外延迟？
+    - 如果 A、B 都随机初始化会有什么问题？
 - id: pre-004
   difficulty: medium
   type: single
-  question: DPO 和 PPO 的核心区别是什么？
+  question: PPO 训练需要 4 个模型，其中被冻结（不更新权重）的是哪两个？
   options:
-  - A. DPO 效果更好但更复杂
-  - B. DPO 把奖励模型隐式消解在损失函数里，不需要显式 RL 循环
-  - C. DPO 需要更多显存
-  - D. DPO 只能用于图像任务
+    - A. Actor 和 Critic
+    - B. Reward Model 和 Reference Model
+    - C. Actor 和 Reward Model
+    - D. Critic 和 Reference Model
   answer: B
-  explanation: 'PPO：SFT → 训练 RM → PPO 强化学习（显式 RL 循环，4 个模型）
-
-    DPO：直接在偏好数据上做监督学习，奖励模型被隐式消解在损失函数里。
-
-    DPO 更简单、更稳定、显存更低，但受限于离线数据（不能在线探索）。
-
-    '
-  tags:
-  - dpo
-  - ppo
-  - alignment
-  related:
-  - DPO vs PPO
+  explanation: Actor（生成回答）和 Critic（估计 V(s)、算 Advantage）在训练中更新；Reward Model 冻结，负责给回答打分；Reference Model 冻结，负责算 KL 散度防止模型漂移。口诀：演员+评委+老师+标杆，2 个训练、2 个冻结。
+  tags: [rlhf, ppo]
+  variants:
+    - Reference Model 的作用是什么？为什么需要它？
+    - 奖励公式 reward = r − β·KL 里 KL 惩罚项的意义是什么？
 - id: pre-005
-  difficulty: easy
+  difficulty: medium
   type: single
-  question: 预训练阶段的训练目标是什么？
+  question: 关于 DPO 和 PPO 的区别，说法正确的是？
   options:
-  - A. 分类损失
-  - B. 下一词预测（Next Token Prediction）
-  - C. 对比学习损失
-  - D. 回归损失
+    - A. DPO 需要显式训练奖励模型 RM，PPO 不需要
+    - B. PPO 是显式 RL 循环（RM 打分 + 策略更新），DPO 把奖励模型隐式消解在损失函数里，直接做监督学习
+    - C. DPO 比 PPO 表达能力更强，支持在线探索
+    - D. 两者复杂度相同，只是实现框架不同
   answer: B
-  explanation: '预训练目标：Next Token Prediction（下一词预测）。
-
-    给前 N 个 token，预测第 N+1 个。
-
-    损失函数：交叉熵（Cross Entropy）。
-
-    评估指标：困惑度 PPL = exp(loss)，越低越好。
-
-    '
-  tags:
-  - pretrain
-  - next-token-prediction
-  related:
-  - 预训练目标
+  explanation: PPO 是显式 RL 循环：SFT → 训练 RM → PPO 更新策略，4 个模型、需精细调参，表达能力强制可在线探索，适合通用对话对齐。DPO 跳过 RM 和 PPO，直接在偏好对（好回答 vs 坏回答）上做监督学习，拉大相对概率差，简单稳定，但受限于离线数据、表达能力弱。
+  tags: [dpo, ppo, alignment]
+  variants:
+    - DPO 的损失函数在做什么？为什么能跳过奖励模型？
+    - 什么场景选 PPO，什么场景选 DPO？
 - id: pre-006
-  difficulty: hard
-  type: single
-  question: GRPO（Group Relative Policy Optimization）和 PPO 的主要区别是什么？
-  options:
-  - A. GRPO 用组内平均奖励代替 Critic，省显存且更稳定
-  - B. GRPO 训练更慢但效果更好
-  - C. GRPO 需要更多模型
-  - D. GRPO 只能用于文本生成
-  answer: A
-  explanation: 'GRPO 核心：用组内相对奖励代替 Critic。
-
-    同一道题采样 G 个答案，A_i = (r_i - mean(r)) / std(r)，比平均分高的就是好答案。
-
-    优势：不需要 Critic → 省 25% 显存 + 避免 Critic 训练不稳定。
-
-    适用：可验证奖励（数学题、代码，答案对不对有客观标准）。
-
-    '
-  tags:
-  - grpo
-  - rl
-  - alignment
-  related:
-  - GRPO 组相对策略优化
+  difficulty: easy
+  type: boolean
+  question: BERT 是 Encoder-only 双向注意力架构，适合理解类任务（分类/NER）；GPT 是 Decoder-only 因果掩码架构，适合生成类任务。
+  answer: true
+  explanation: BERT 双向注意力，预训练任务为 MLM（掩码语言模型）+ NSP，擅长理解类任务（分类、匹配、NER），微调方式是加分类头；GPT 单向因果掩码，预训练任务为 CLM（因果语言模型），擅长生成类任务（对话、写作），微调方式是 SFT/RLHF。理解类任务选 BERT 又快又准，生成类任务只能选 GPT 系。
+  tags: [bert, gpt, architecture]
+  variants:
+    - 理解类任务和生成类任务分别选什么架构？选型原则是什么？
+    - 为什么现在大模型趋向 Decoder-only 大一统？
 - id: pre-007
   difficulty: medium
-  type: single
-  question: LoRA（Low-Rank Adaptation）微调的原理是什么？
-  options:
-  - A. 直接修改原始权重 W
-  - B. 在原始权重旁加两个低秩矩阵 A 和 B，训练只更新 A×B
-  - C. 只训练偏置项
-  - D. 把模型剪枝后再微调
-  answer: B
-  explanation: 'LoRA 原理：不直接改原始权重 W，而是加两个小矩阵 A 和 B：W + A×B
-
-    A 随机初始化，B 初始化为 0（初始时不影响输出）。
-
-    训练时只更新 A 和 B，原始 W 冻结。
-
-    可训练参数通常 0.1%~1%，显存省 90%+，推理时可合并回 W 零延迟。
-
-    '
-  tags:
-  - lora
-  - finetune
-  - parameter-efficient
-  related:
-  - LoRA 低秩适配
+  type: boolean
+  question: 预训练的目标（预测下一个词）与对齐的目标（输出有帮助、无害、诚实的回答）本质上是同一件事。
+  answer: false
+  explanation: 预训练目标 = 预测下一个 token，学到的是「互联网上的人怎么说」，不代表「助手应该怎么说」；对齐（RLHF/DPO/GRPO）用人类偏好把模型拉向有用/无害/诚实。两者目标不同，这正是对齐阶段存在的原因——如果目标相同就不需要对齐了。
+  tags: [pretrain, alignment]
+  variants:
+    - 为什么纯预训练的 Base Model 不适合直接当助手？
+    - 对齐税是什么？为什么 RLHF 后某些能力会轻微退化？
 - id: pre-008
   difficulty: medium
-  type: single
-  question: 为什么 RLHF 中要有 KL 散度惩罚？
-  options:
-  - A. 让模型生成更快
-  - B. 防止模型为了拿高分而跑偏太远，保持在 SFT 模型附近
-  - C. 减少参数量
-  - D. 提高训练稳定性
-  answer: B
-  explanation: '奖励公式：reward = r - β·KL
-
-    KL 散度衡量「当前策略模型」和「参考模型（SFT）」的差异。
-
-    没有 KL 惩罚的话，模型可能为了讨好奖励模型而生成奇怪的文本（奖励黑客）。
-
-    KL 惩罚保证模型在 SFT 基础上微调，不会跑偏太远。
-
-    '
-  tags:
-  - rlhf
-  - ppo
-  - kl-divergence
-  related:
-  - KL 散度惩罚
-  - 奖励黑客
+  type: boolean
+  question: LoRA 训练时冻结原始权重、只更新低秩矩阵 A 和 B；推理时可以把 A×B 合并回原始权重 W，推理零额外延迟。
+  answer: true
+  explanation: 训练时 W 冻结，只更新 A、B（可训练参数通常 0.1%~1%），优化器状态也只给 LoRA 参数，所以省显存。推理时预先算好 W' = W + A×B 合并后的权重，参数量与全量模型一样，无额外计算延迟；而且一个基座可以挂多个 LoRA 适配器，切换场景只换适配器。
+  tags: [lora, inference]
+  variants:
+    - LoRA 省显存的核心原因是什么？
+    - 可训练参数大约占多少比例（r=8 时）？
 - id: pre-009
-  difficulty: easy
-  type: single
-  question: 关于 Scaling Law（缩放定律），以下哪个说法是正确的？
-  options:
-  - A. 模型越大一定越好，没有上限
-  - B. 性能和参数量、数据量、算力大致呈幂律关系
-  - C. Scaling Law 只适用于视觉模型
-  - D. 数据量对性能没有影响
-  answer: B
-  explanation: 'Scaling Law：性能 ∝ 参数量^α × 数据量^β × 算力^γ
-
-    大致是幂律关系，越大越强，可预测。
-
-    但不是所有能力都遵循——有些能力是涌现的（过了阈值突然会）。
-
-    '
-  tags:
-  - scaling-law
-  - pretrain
-  related:
-  - 缩放定律
-  - 涌现能力
-- id: pre-010
-  difficulty: hard
-  type: single
-  question: 分布式训练中，数据并行（DP）、张量并行（TP）、流水线并行（PP）的主要区别是什么？
-  options:
-  - A. DP 切数据，TP 切矩阵，PP 切层
-  - B. DP 切层，TP 切数据，PP 切矩阵
-  - C. 三者都是一回事，只是名字不同
-  - D. DP 最快，PP 最省显存
-  answer: A
-  explanation: 'DP（数据并行）：每张卡有完整模型，数据分片，AllReduce 同步梯度。
-
-    TP（张量并行）：把矩阵乘法切开，每张卡算一部分，通信量大。
-
-    PP（流水线并行）：把模型分层，不同卡负责不同层，像流水线一样。
-
-    三者结合 = 3D 并行，是训练大模型的标准做法。
-
-    '
-  tags:
-  - distributed-training
-  - data-parallel
-  - tensor-parallel
-  - pipeline-parallel
-  related:
-  - 3D 并行
-  - 分布式训练
-- id: pre-boss-1
   difficulty: hard
   type: open
-  question: 请比较 PPO、DPO、GRPO 三种对齐方法的核心区别，说明各自的优缺点和适用场景。
+  question: 请完整描述大模型从原始文本到可对话助手的全流程（预训练与微调），说明每个阶段的目标、数据、训练目标和产出。
+  points:
+    - 数据准备：清洗、去重（MinHash/SimHash）、质量过滤、分词（BPE/WordPiece），产出万亿 token 级高质量语料
+    - 预训练：Next Token Prediction（下一词预测）+ 交叉熵损失，用万亿 token 互联网文本，产出 Base Model（续写器），学会语言能力和世界知识
+    - SFT：几万~几十万条高质量指令数据，交叉熵但只算 assistant 部分（Label Mask），产出 SFT Model（学会听指令、对话格式）
+    - 对齐：人类偏好数据（偏好对/可验证奖励），用 PPO/DPO/GRPO，产出 Chat Model（对话助手），符合有用/无害/诚实
+    - 总结口诀：预训练给知识、SFT 给格式、对齐给价值观；数据量递减、主观度递增（可选加分）
   answer:
-  - PPO需要四个模型 Actor Critic RM Reference
-  - DPO把奖励模型隐式消解在损失函数里
-  - GRPO用组内相对奖励代替Critic
-  - PPO最复杂显存最大但可以在线探索
-  - DPO最简单稳定但受限于离线数据
-  - GRPO省显存适合可验证奖励如数学代码
-  - KL散度惩罚防止模型跑偏
-  explanation: PPO：4个模型，显式RL循环，可在线探索但复杂不稳定；DPO：直接偏好优化，奖励模型隐式消解，简单稳定但离线；GRPO：组相对策略优化，用组内平均奖励代替Critic，省显存，适合可验证奖励任务。
-  tags:
-  - rlhf
-  - ppo
-  - dpo
-  - grpo
-  - boss
-  min_keywords: 3
+    - 四阶段及各阶段目标
+    - 每阶段的数据量级与训练目标
+    - 每阶段产出（Base/SFT/Chat Model）
+  explanation: 按「数据准备 → 预训练 → SFT → 对齐」顺序答出每阶段「数据量 + 训练目标 + 产出」三个要素即可，用口诀「预训练给知识、SFT 给格式、对齐给价值观」总结得满分。
+  tags: [pretrain, sft, alignment, pipeline]
+  variants:
+    - 为什么 Base Model 不能直接当助手用？
+    - 如果跳过 SFT 直接做 RLHF 会怎样？（R1-Zero 的启示）
+- id: pre-010
+  difficulty: hard
+  type: open
+  question: 对比 RLHF/PPO、DPO、GRPO 三种对齐方法，说明各自的原理、优缺点和适用场景。
+  points:
+    - RLHF 三步骤：SFT → 训练奖励模型 RM（偏好对，损失 -log σ(r_w - r_l)，好回答得分高于坏回答）→ PPO 强化学习
+    - PPO 四模型：Actor（训练更新，生成回答）+ Critic（训练更新，估计 V(s) 算 Advantage）+ Reward Model（冻结，打分）+ Reference Model（冻结，算 KL 散度防漂移）；奖励 = r − β·KL；PPO Clip 把策略更新限制在 [1-ε, 1+ε]
+    - DPO：跳过 RM+PPO，把奖励模型隐式消解在损失函数里，直接在偏好对（好回答 vs 坏回答）上做监督学习，拉大相对概率差；简单稳定、显存低，但受限于离线数据、表达能力弱
+    - GRPO：用组内平均奖励代替 Critic，A_i = (r_i - mean(r)) / std(r)，省约 25% 显存、避免 Critic 训练不稳定；3 个模型（Actor + RM + Reference）；适合可验证奖励（数学、代码、格式遵循），不适合开放对话
+    - 对比维度：PPO 复杂度高需精细调参、表达能力强；DPO 简单稳定、表达受限；对齐税：RLHF 后能力可能轻微退化（可选加分）
+  answer:
+    - 三种方法的原理一句话概括
+    - PPO 的四模型与奖励公式
+    - 各自的优缺点与适用场景
+  explanation: 三种方法各答出「原理一句话 + 关键机制 + 适用场景」：PPO 答出四模型和 KL 惩罚，DPO 答出隐式奖励、跳过 RL 循环，GRPO 答出组内相对优势、去掉 Critic，即得满分。
+  tags: [rlhf, ppo, dpo, grpo, alignment]
+  variants:
+    - 为什么 GRPO 不需要 Critic？能省多少显存？
+    - 数学/代码场景选哪种对齐方法，开放对话场景选哪种？
+- id: pre-011
+  difficulty: medium
+  type: open
+  question: 解释 LoRA 的原理、为什么它有效，以及 r 和 alpha 怎么选？
+  points:
+    - 原理：冻结原始权重 W，加两个低秩矩阵 A 和 B，W + A×B 近似权重更新量 ΔW；A 随机初始化、B 初始化为 0，训练只更新 A、B
+    - 为什么有效：大模型的权重更新本质上是低秩的，只有少数方向需要改变，低秩近似足够表达
+    - r（秩）选择：一般 4~64，越大越灵活但参数越多，从 8 开始试；经验：效果不够加大 r，过拟合减小 r
+    - alpha 选择：缩放因子，一般 alpha = r × 2，实际效果相当于把 LoRA 输出乘以 alpha/r
+    - 优势：可训练参数 0.1%~1%（r=8 时约 0.22%），省显存（约 90%），一个基座挂多个适配器切换场景快，推理可合并零延迟
+  answer:
+    - W + A×B 的低秩分解原理与初始化方式
+    - 低秩假设（权重更新本质低秩）
+    - r/alpha 的选择方法与经验
+  explanation: 原理（冻结 W + 低秩 A×B）、有效性（低秩假设）、参数选择（r 从 8 起、alpha=2r、过拟合减 r）、优势（参数占比/显存/多适配器/推理合并）四块答齐得满分。
+  tags: [lora, finetune, parameter-efficient]
+  variants:
+    - LoRA 和全量微调各自优劣？长训练、大数据量时谁的上限更高？
+    - 一个基座挂多个 LoRA 适配器的应用场景是什么？

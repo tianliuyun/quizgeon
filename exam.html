@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>题牢 · 考核模式</title>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --accent:#38bdf8; --ok:#4ade80; --bad:#f87171; --text:#e2e8f0; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.container { max-width:760px; margin:0 auto; padding:20px; }
+h1 { font-size:22px; margin-bottom:6px; }
+.sub { color:#94a3b8; font-size:13px; margin-bottom:20px; }
+.card { background:var(--card); border-radius:12px; padding:20px; margin-bottom:16px; }
+.row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:10px 0; }
+label { font-size:14px; }
+select, input, textarea { background:#0f172a; color:var(--text); border:1px solid #334155; border-radius:8px; padding:8px 12px; font-size:14px; }
+textarea { width:100%; min-height:120px; resize:vertical; margin-top:10px; font-family:inherit; }
+.btn { background:var(--accent); color:#0f172a; border:none; border-radius:8px; padding:10px 22px; font-size:15px; font-weight:600; cursor:pointer; }
+.btn:hover { opacity:.85; }
+.btn:disabled { opacity:.4; cursor:not-allowed; }
+.btn-secondary { background:#334155; color:var(--text); }
+.timer { font-size:16px; font-weight:700; color:var(--accent); }
+.q-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.q-type { font-size:12px; background:#334155; padding:3px 10px; border-radius:20px; }
+.q-text { font-size:17px; line-height:1.6; margin-bottom:16px; white-space:pre-wrap; }
+.opt { display:block; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:12px 16px; margin:8px 0; cursor:pointer; font-size:15px; }
+.opt:hover { border-color:var(--accent); }
+.opt.selected { border-color:var(--accent); background:#0c4a6e; }
+.opt.correct { border-color:var(--ok); background:#14532d; }
+.opt.wrong { border-color:var(--bad); background:#7f1d1d; }
+.judge-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+.judge-status { font-size:13px; color:#94a3b8; }
+.points-box { background:#0f172a; border-radius:8px; padding:10px 14px; margin-top:12px; font-size:13px; }
+.points-box .hit { color:var(--ok); }
+.points-box .miss { color:var(--bad); }
+.report-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin:16px 0; }
+.metric { background:#0f172a; border-radius:10px; padding:14px; text-align:center; }
+.metric .num { font-size:26px; font-weight:700; color:var(--accent); }
+.metric .lbl { font-size:12px; color:#94a3b8; margin-top:4px; }
+.tag { display:inline-block; background:#334155; padding:3px 10px; border-radius:20px; font-size:12px; margin:3px; }
+.wrong-item { background:#0f172a; border-radius:8px; padding:12px; margin:8px 0; font-size:14px; }
+.wrong-item .q { margin-bottom:6px; }
+.wrong-item .a { color:#94a3b8; font-size:13px; }
+#report { display:none; }
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📝 题牢 · 考核模式</h1>
+  <div class="sub">限时随机抽题 · 防背题变式 · 开放题 LLM 判分（火山 deepseek） · 间隔复测</div>
+
+  <!-- 配置区 -->
+  <div id="config" class="card">
+    <div class="row">
+      <label>题库：</label>
+      <select id="bank-select"></select>
+      <label>题数：</label>
+      <select id="count-select">
+        <option value="5">5 题</option>
+        <option value="10" selected>10 题</option>
+        <option value="15">15 题</option>
+        <option value="0">全部</option>
+      </select>
+      <label>限时：</label>
+      <select id="time-select">
+        <option value="0">不限时</option>
+        <option value="300">5 分钟</option>
+        <option value="600" selected>10 分钟</option>
+        <option value="900">15 分钟</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>变式防背题：</label>
+      <select id="variant-select">
+        <option value="1" selected>开启（随机换题干）</option>
+        <option value="0">关闭（原题）</option>
+      </select>
+      <button class="btn" id="btn-start">开始考核</button>
+    </div>
+    <div id="config-info" class="sub" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- 答题区 -->
+  <div id="quiz" class="card hidden">
+    <div class="q-head">
+      <span id="q-progress"></span>
+      <span class="timer" id="timer"></span>
+    </div>
+    <span class="q-type" id="q-type"></span>
+    <div class="q-text" id="q-text"></div>
+    <div id="q-options"></div>
+    <div id="q-open" class="hidden">
+      <textarea id="open-answer" placeholder="输入你的答案（要点式回答即可）"></textarea>
+    </div>
+    <div class="judge-row">
+      <button class="btn" id="btn-submit">提交</button>
+      <button class="btn btn-secondary" id="btn-skip">跳过</button>
+      <span class="judge-status" id="judge-status"></span>
+    </div>
+    <div id="judge-result"></div>
+  </div>
+
+  <!-- 报告区 -->
+  <div id="report" class="card">
+    <h2>📊 考核报告</h2>
+    <div class="report-grid">
+      <div class="metric"><div class="num" id="r-correct"></div><div class="lbl">客观题正确率</div></div>
+      <div class="metric"><div class="num" id="r-points"></div><div class="lbl">开放题得分点</div></div>
+      <div class="metric"><div class="num" id="r-time"></div><div class="lbl">用时</div></div>
+      <div class="metric"><div class="num" id="r-score"></div><div class="lbl">综合分</div></div>
+    </div>
+    <div><strong>薄弱知识点：</strong><span id="r-weak"></span></div>
+    <div style="margin-top:14px;"><strong>错题回顾：</strong></div>
+    <div id="r-wrong"></div>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn" id="btn-again">再来一次</button>
+      <button class="btn btn-secondary" id="btn-back">返回配置</button>
+    </div>
+  </div>
+</div>
+<script src="src/js/data/questions.js"></script>
+<script src="exam.js"></script>
+</body>
+</html>

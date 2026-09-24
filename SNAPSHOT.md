@@ -1,66 +1,45 @@
 # SNAPSHOT.md — Quizgeon（题牢）进度快照
 
-> 更新：2026-09-08（当日收工）
-> 仓库：https://github.com/tianliuyun/quizgeon
-> 在线玩：https://tianliuyun.github.io/quizgeon/
+> 更新：2026-09-24（考核体系 V1 上线）
 
 ## 当前阶段
 
-v0.18 已完成，项目已开源上线到 GitHub。v0.19（性能优化+可访问性）和 v0.20（最终打磨）待做。
+**考核体系 V1 已完成**：在游戏本体之外新增独立考核模式（exam.html），打通"题库→答题→LLM 判分→报告"最小闭环。V1.1（题库补全+间隔复测）和 V1.2（分数曲线+模拟面试）迭代中。
 
-## 本轮完成（本次会话）
+## 本轮完成（2026-09-24）
 
-- ✅ v0.18 收尾：Issue 模板（3个） + PR 模板 + README 补充（测试/构建/PWA/贡献/统计）
-- ✅ 开源上线：GitHub 仓库创建 + 推送（18 个 commit，v0.1 ~ v0.18）
-- ✅ GitHub Pages 启用（首次构建需等待）
-- ✅ 仓库设置：topics（10个标签）、主页链接、关闭 Wiki
-- ✅ SNAPSHOT.md + AGENTS.md 更新
+- ✅ **题库扩展**：llm-interview 从 44 题 → 47 题（transformer 11 / pretrain-sft 11 / rag-agent 14 / distributed 11），题型 single 29 + boolean 8 + open 10；open 题带 points 得分点 + variants 变式（36 个变式）
+- ✅ **LLM 判分服务**：`judge-server/judge-server.py`（FastAPI 8787），调火山方舟 deepseek-v4-flash（~/.hermes/.env 的 ARK_API_KEY），按得分点逐条判分，实测好答案 4/4、模糊答案 0/4（严格）
+- ✅ **考核模式**：`exam.html` + `exam.js`——题库/题数/限时选择、随机抽题、变式防背题、single/boolean 即时判分、open 题 LLM 判分、考核报告（正确率/得分点/薄弱点 tags/错题回顾）、localStorage 存历史
+- ✅ **build 脚本**：支持 boolean 题型、判断题无需 options、跳过 `_` 开头归档目录
+- ✅ **入口**：index.html 菜单新增「📝 考核模式」按钮
+- ✅ 旧 03-rag-agent-inference.yaml 归档到 `questions/_archive/`（与新 rag-agent 题库 ID 冲突）
 
 ## 项目状态清单（全量）
 
-- ✅ v0.1：MVP 基线，核心答题循环 + 2层20题
-- ✅ v0.2：架构重构，集中配置 + 工具函数
-- ✅ v0.3：错误处理 + 边界加固
-- ✅ v0.4：遗物系统（8个）
-- ✅ v0.5：职业系统（4个）
-- ✅ v0.6：动画效果（飘字/震动/受击）
-- ✅ v0.7：第4层题库（分布式训练+推理）
-- ✅ v0.8：难度选择 + 每日挑战
-- ✅ v0.9：键盘快捷键
-- ✅ v0.10：成就系统（16个）
-- ✅ v0.11：多题库系统（2套题库）
-- ✅ v0.12：移动端优化 + 触感反馈
-- ✅ v0.13：主题系统（4个主题）
-- ✅ v0.14：统计增强 + 学习进度 + 学习建议
-- ✅ v0.15：PWA 支持（离线可用）
-- ✅ v0.16：题库构建工具脚本
-- ✅ v0.17：单元测试（42 JS + 20 Python）
-- ✅ v0.18：开源准备（LICENSE + 贡献指南 + Issue/PR 模板 + README）
-- 📌 v0.19：性能优化 + 可访问性
-- 📌 v0.20：最终打磨 + 正式发布
+- ✅ v0.1~v0.18 游戏本体（地牢/错题池/图鉴/统计/每日挑战/PWA 等）
+- ✅ v0.19/v0.20 待做（性能/可访问性/最终打磨）
+- ✅ **考核体系 V1**（exam.html + judge-server + 47 题混合题库）
+- 📌 V1.1：题库补全到 9 模块 ~150 题（NLP 基础/系统设计/项目深挖追问链）、间隔复测高危清单、不预告全量抽
+- 📌 V1.2：分数曲线（历史考核记录可视化）、模拟面试模式、每日小测包接入 100h 计划
 
-## 待老师拍板
+## 考核体系使用
 
-- 无
+1. 启动 judge 服务：`~/.hermes/hermes-agent/venv/bin/python3 judge-server/judge-server.py --port 8787`
+2. 打开 http://127.0.0.1:8899/exam.html（或 index.html → 📝 考核模式）
+3. 选择题库/题数/限时 → 开始 → 答题（open 题需要 judge 服务判分）
+4. 报告自动出正确率/得分点/薄弱点，历史存 localStorage
 
-## 关键约定/红线
+## 待办（下次开工）
 
-- **技术栈**：纯 HTML/CSS/JS，零依赖、零构建
-- **版本管理**：每个版本一个 commit，可随时回退
-- **部署**：
-  - 本地服务 `http://100.122.77.116:8765`（systemd 托管）
-  - GitHub Pages: https://tianliuyun.github.io/quizgeon/
-- **开源仓库**：https://github.com/tianliuyun/quizgeon
-- **题库规范**：YAML 源文件 → 构建脚本生成 JS
-- **测试纪律**：核心模块必须有单元测试，零依赖 test runner
-- **共 62 个测试，全部通过**
+- [ ] V1.1：补 NLP 基础/系统设计/三项目追问链题库（从 30 道题 + 项目深挖复习计划转）
+- [ ] V1.1：间隔复测（错题 2-3 天复现）+ 高危清单
+- [ ] V1.2：历史分数曲线图表 + 模拟面试模式（40min 全真）
+- [ ] 浏览器交互完整回归（browser_exec 环境依赖下载失败，V1 仅验证了题库加载/单点判分）
 
-## 下次开工入口
+## 关键约定
 
-1. 读 AGENTS.md + SNAPSHOT.md
-2. 第一步动作：v0.19 性能优化 + 可访问性
-   - 首屏加载优化（精简 CSS、延迟加载非核心 JS）
-   - 可访问性（ARIA 标签、键盘导航完善、对比度检查）
-   - 性能指标测量（Lighthouse 跑分）
-3. 然后 v0.20 最终打磨 + 正式发版
-4. 项目路径：`~/.hermes/workspace/tasks/quizgeon/`
+- LLM 判分统一走火山方舟 deepseek-v4-flash（与 Hermes 对话同模型），key 从 ~/.hermes/.env 读 ARK_API_KEY
+- 题库格式：boolean 判断题 answer=true/false；open 题必填 points + 建议 variants（规范已更新）
+- build 命令：`~/.hermes/hermes-agent/venv/bin/python3 scripts/build-questions.py`
+- 归档目录 `questions/_archive/` 不被 build 收录
