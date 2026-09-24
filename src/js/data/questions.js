@@ -112,7 +112,7 @@ window.QUESTION_BANKS = {
     "name": "大模型面试",
     "emoji": "🧠",
     "description": "大模型工程师面试题库，覆盖 Transformer / 预训练 / SFT / RAG / Agent / 推理优化",
-    "questionCount": 73,
+    "questionCount": 117,
     "questions": [
       {
         "id": "trans-001",
@@ -2068,6 +2068,1184 @@ window.QUESTION_BANKS = {
         "variants": [
           "为什么用 LLM-as-a-Judge 而不是人工评测？",
           "训练集和评测集为什么要分开？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-001",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "关于 ReLU 激活函数（f(x)=max(0,x)），下列说法正确的是？",
+        "options": [
+          "A. 计算简单，且正区间导数为 1，能缓解梯度消失",
+          "B. 输出以 0 为中心，天然利于收敛",
+          "C. 输出范围在 0~1 之间，适合做概率输出",
+          "D. 导数处处非零，不存在神经元死亡问题"
+        ],
+        "answer": "A",
+        "explanation": "ReLU=max(0,x)，只需比较取最大值，是计算最简单的激活函数；x>0 时导数为 1，梯度连乘不会快速衰减，缓解梯度消失。B 错——ReLU 输出非负、不是零中心（零中心的是 Tanh）；C 是 Sigmoid 的特点；D 错——x≤0 时导数为 0，会出现神经元\"死亡\"。",
+        "tags": [
+          "activation",
+          "relu"
+        ],
+        "week": "week2-深度学习基础",
+        "project": "none",
+        "stack": "transformer",
+        "variants": [
+          "Transformer 的 FFN 用的什么激活函数？GELU 相比 ReLU 有什么特点？",
+          "什么是\"死亡 ReLU\"？如何缓解？",
+          "ReLU 相比 Sigmoid 为什么更适合深层网络？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-002",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "关于 Sigmoid 激活函数 σ(x)=1/(1+e⁻ˣ)，下列说法正确的是？",
+        "options": [
+          "A. 输出范围 0~1，适合二分类输出层，其导数 = σ(x)(1−σ(x))",
+          "B. 输出范围 −1~1，零中心，适合隐藏层",
+          "C. 导数恒为 1，不会出现饱和",
+          "D. 多分类任务的标配输出激活函数"
+        ],
+        "answer": "A",
+        "explanation": "Sigmoid 输出 0~1，可解释为二分类概率，常用于二分类输出层；其导数 σ(x)(1−σ(x)) 是高频考点。B 是 Tanh（输出 −1~1、零中心，优于 Sigmoid）；C 错——Sigmoid 两端导数趋近 0 会饱和；D 是 Softmax（多分类输出层，输出概率分布）。",
+        "tags": [
+          "activation",
+          "sigmoid"
+        ],
+        "week": "week2-深度学习基础",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "Sigmoid 放在深层隐藏层为什么容易引起梯度消失？",
+          "Sigmoid 和 Softmax 分别在什么场景使用？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-003",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "Adam 优化器相比 SGD 的核心改进是什么？",
+        "options": [
+          "A. 同时用一阶矩（动量）和二阶矩（梯度方差）为每个参数自适应调整学习率",
+          "B. 完全固定学习率，只按梯度符号更新",
+          "C. 每次只用单个样本更新，噪声更大",
+          "D. 不需要设置任何超参数"
+        ],
+        "answer": "A",
+        "explanation": "Adam=动量+自适应学习率：一阶矩 mₜ 做指数移动平均平滑噪声（β₁≈0.9），二阶矩 vₜ 估计梯度尺度（β₂≈0.999），更新 θₜ=θₜ₋₁−η·m̂ₜ/(√v̂ₜ+ε)，并做偏差修正消除初期低估。效果上梯度大的参数步长自动缩小、梯度小的放大。SGD 的局限是学习率难调（过大震荡/过小慢）、各参数同等对待、鞍点停滞。实践建议：Adam 是默认首选，尤其 NLP/Transformer。",
+        "tags": [
+          "optimizer",
+          "adam"
+        ],
+        "week": "week3-深度学习组件",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "简述 Adam 的五个步骤（从算梯度到参数更新）？",
+          "Adam 里的 β₁、β₂ 分别控制什么？偏差修正解决什么问题？",
+          "什么情况下 SGD+Momentum 反而比 Adam 好？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-004",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "关于损失函数的选择，下列说法正确的是？",
+        "options": [
+          "A. 分类任务标配 Softmax+交叉熵，回归任务常用 MSE",
+          "B. 分类任务用 MSE，回归任务用交叉熵",
+          "C. 交叉熵只能用于二分类任务",
+          "D. MSE 的输出一定可以解释为概率"
+        ],
+        "answer": "A",
+        "explanation": "MSE=(ŷ−y)² 衡量数值差距，适合回归；交叉熵 L=−Σyᵢlog(ŷᵢ) 衡量预测分布与真实分布的差异，配合 Softmax（输出概率分布、和为 1）是分类标配——课程实战手写 softmax+onehot+log 交叉熵与 torch 结果完全一致（0.7676）。三者闭环：损失函数给目标 → 反向传播算梯度 → 梯度下降更新。",
+        "tags": [
+          "loss",
+          "cross-entropy"
+        ],
+        "week": "week2-深度学习基础",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "为什么交叉熵要和 Softmax 配合使用？",
+          "nn.CrossEntropyLoss 内部已经包含 Softmax，它和手动先 Softmax 再算交叉熵有什么区别？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-005",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "Transformer/BERT 等 NLP 模型为什么用 LayerNorm 而不用 BatchNorm？",
+        "options": [
+          "A. BN 依赖 batch 统计量，NLP 序列长度不一、batch 又小，统计不稳定",
+          "B. LN 在 batch 维度归一化，依赖 batch size",
+          "C. BN 不需要可学习参数 γ、β",
+          "D. LN 无法在 GPU 上运行"
+        ],
+        "answer": "A",
+        "explanation": "BN 在 batch 方向归一化（每个特征维），训练用当前 batch 统计、推理用移动平均；NLP 序列长度不一、padding 多，且 batch 小（显存限制），BN 统计量不准。LN 对每个样本在特征方向归一化，不依赖 batch 和序列长度，训练/推理一致，是 Transformer/BERT 的标准。归一化公式 x̂=(x−μ)/√(σ²+ε)，γ、β 可学习。",
+        "tags": [
+          "normalization",
+          "layernorm"
+        ],
+        "week": "week3-深度学习组件",
+        "project": "none",
+        "stack": "transformer",
+        "variants": [
+          "什么场景下 BatchNorm 反而更合适？",
+          "现代大模型常用的 RMSNorm 和 LayerNorm 有什么区别？",
+          "归一化公式里的 γ、β 是什么？为什么需要它们？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-006",
+        "difficulty": "hard",
+        "type": "single",
+        "question": "PyTorch 默认采用 inverted dropout，下列说法正确的是？",
+        "options": [
+          "A. 训练时输出除以 (1−p) 保持期望不变，推理时不做任何缩放",
+          "B. 训练和推理时都按 p 随机屏蔽神经元",
+          "C. 只有推理时做屏蔽，训练时不屏蔽",
+          "D. 训练时屏蔽后不缩放，推理时乘 (1−p)"
+        ],
+        "answer": "A",
+        "explanation": "inverted dropout 训练时 y=x·mask/(1−p)：屏蔽 p 比例神经元并放大保留值，使输出期望不变；推理时 y=x 无需缩放（PyTorch 默认）。注意推理前必须 model.eval() 关闭屏蔽，否则预测不稳定。Dropout 强迫网络学分散特征，相当于 2ⁿ 个子网络集成，防过拟合；与权重衰减（L2 正则化，惩罚大权重）是常用正则化组合。",
+        "tags": [
+          "regularization",
+          "dropout"
+        ],
+        "week": "week3-深度学习组件",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "为什么推理前必须调用 model.eval()？不调用会怎样？",
+          "权重衰减（L2 正则化）和 Dropout 防过拟合的机制有何不同？",
+          "Dropout 的 p 一般怎么设（Embedding 后 / 全连接层前）？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-007",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "梯度下降中，学习率设置过大可能导致损失震荡甚至发散，设置过小则收敛极慢。",
+        "answer": true,
+        "explanation": "更新式 W←W−η·∇L，η 太大一步跨过头（震荡/发散），η 太小每步挪动极小（收敛慢）。课程 GradientDescent 实战（合理学习率）loss 47.75→0.0006 即为效果验证。实践中常用学习率调度：初期 warmup 小学习率线性增，后期阶梯衰减或余弦退火——开始大步探索、后期小步精调。",
+        "tags": [
+          "optimizer",
+          "learning-rate"
+        ],
+        "week": "week2-深度学习基础",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "学习率调度有哪些方式？warmup 的作用是什么？",
+          "训练时怎么判断当前学习率设置过大还是过小？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-008",
+        "difficulty": "medium",
+        "type": "boolean",
+        "question": "LSTM 通过细胞状态 c 直接传播信息，彻底解决了 RNN 的梯度消失问题。",
+        "answer": false,
+        "explanation": "LSTM 用遗忘门/输入门/输出门控制信息流动，细胞状态 cₜ=fₜ⊙cₜ₋₁+iₜ⊙c̃ₜ 直接传播、梯度通道顺畅，显著缓解（而不是彻底解决）梯度消失——课程笔记明确写\"缓解梯度消失\"。超长序列仍会梯度衰减，所以后续才用 Attention：任意两位置直接相连 + 残差连接保底梯度，才真正解决长距离依赖。",
+        "tags": [
+          "rnn",
+          "lstm",
+          "gradient"
+        ],
+        "week": "week3-深度学习组件",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "LSTM 的三个门分别控制什么？细胞状态更新公式怎么写？",
+          "为什么 Attention 能解决 RNN 的长距离依赖问题？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-009",
+        "difficulty": "medium",
+        "type": "boolean",
+        "question": "如果不加任何激活函数，无论叠加多少层全连接层，整个网络仍然等价于一个线性变换。",
+        "answer": true,
+        "explanation": "多层线性层连乘 W₃(W₂(W₁x+b₁)+b₂)+b₃ 可以合并为单个线性变换 Wx+b，表达能力不变——多层线性=仍线性。激活函数（ReLU 等）引入非线性，深度才有意义；课程强调深度比宽度更重要，正是建立在非线性激活之上。",
+        "tags": [
+          "activation",
+          "mlp"
+        ],
+        "week": "week2-深度学习基础",
+        "project": "none",
+        "stack": "transformer",
+        "variants": [
+          "为什么说\"深度比宽度更重要\"？",
+          "激活函数在神经网络中的根本作用是什么？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-010",
+        "difficulty": "medium",
+        "type": "open",
+        "question": "请用直觉解释反向传播（Backpropagation）的过程，并说明它和链式法则的关系。",
+        "points": [
+          "前向传播：输入逐层计算得到预测 ŷ，与真实 y 算出损失 L（损失函数给目标）",
+          "反向：从损失出发，用链式法则（dy/dx=f'(g(x))·g'(x)，局部梯度逐层相乘）从输出层往回计算每个权重对损失的偏导——梯度",
+          "梯度方向是损失上升最快的方向，负梯度方向下降最快",
+          "参数更新：W←W−η·∇L，由优化器完成",
+          "框架层面：PyTorch 自动微分代劳，训练循环 loss.backward() → optimizer.step()，且每轮先 zero_grad() 清空梯度"
+        ],
+        "answer": [
+          "前向算出损失，反向用链式法则从输出层逐层计算每个权重的梯度",
+          "梯度指向损失上升最快的方向，沿负梯度方向更新参数"
+        ],
+        "explanation": "反向传播=链式法则的工程化应用。面试强调三点：①逐层局部梯度相乘；②梯度的几何含义（上升最快方向，负梯度下降）；③框架帮你算梯度（zero_grad→backward→step 循环）。week1 手写梯度下降踩过学习率/符号的坑，week2 用 torch 自动微分即体会到\"框架算梯度\"的价值。",
+        "tags": [
+          "backprop",
+          "chain-rule"
+        ],
+        "week": "week2-深度学习基础",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "训练循环里为什么要 optimizer.zero_grad()？不清零会怎样？",
+          "手推一个两层网络某个权重的梯度计算过程。"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-011",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "对比 BatchNorm 和 LayerNorm 的归一化方式，并说明为什么 NLP/Transformer 首选 LayerNorm。",
+        "points": [
+          "归一化维度：BN 在 batch 方向按特征维归一化（依赖 batch 统计量）；LN 对每个样本在特征方向归一化（不依赖 batch）",
+          "序列长度不一/padding：NLP 变长序列 padding 多，BN 统计量被污染、不准",
+          "batch 小：显存限制下 batch size 小，BN 统计不稳定；推理时 BN 用移动平均的全局统计量，变长序列下不好用",
+          "LN 训练/推理一致，是 Transformer/BERT 的标准选择",
+          "加分项：现代大模型常用 RMSNorm（去掉均值中心化、只做缩放，更快更省）"
+        ],
+        "answer": [
+          "BN 按 batch 归一化、LN 按样本归一化",
+          "序列变长、batch 小、推理统计量三个原因"
+        ],
+        "explanation": "先答定义对比（归一化维度），再答三个原因（变长/padding、batch 小、推理一致性），最后答出 RMSNorm 加分。归一化解决的是内部协变量偏移（各层输入分布漂移导致训练不稳定）。week3 实战手写 BN 与 torch 输出一致验证过。",
+        "tags": [
+          "normalization",
+          "batchnorm",
+          "layernorm"
+        ],
+        "week": "week3-深度学习组件",
+        "project": "none",
+        "stack": "transformer",
+        "variants": [
+          "什么是内部协变量偏移（Internal Covariate Shift）？归一化如何缓解它？",
+          "图像任务里 BatchNorm 为什么效果好？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "ml-012",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "什么是梯度消失和梯度爆炸？为什么深度网络会出现？请至少列出三种缓解手段。",
+        "points": [
+          "定义：反向传播梯度逐层连乘，连乘结果 <1 时深层梯度趋近 0（消失），>1 时指数放大（爆炸）",
+          "原因：链式法则连乘 + 层数深；Sigmoid/Tanh 两端导数趋近 0（饱和区）加剧消失；RNN 长序列隐状态 tanh 反复传递尤其严重",
+          "缓解 1：激活函数换 ReLU（正区间导数恒为 1，梯度不衰减）",
+          "缓解 2：残差连接 y=x+f(x)，梯度有恒等通路保底（∂y/∂x=1+∂f/∂x），Transformer 靠它堆几十上百层",
+          "缓解 3：归一化（LayerNorm/BatchNorm）稳定各层输入分布，避免进入激活饱和区",
+          "其他可选：合理初始化、梯度裁剪、LSTM 细胞状态直接传播"
+        ],
+        "answer": [
+          "梯度连乘趋 0 或爆炸，深度网络 + Sigmoid/Tanh 饱和加剧",
+          "缓解：ReLU、残差连接、LayerNorm/BN、梯度裁剪、LSTM"
+        ],
+        "explanation": "从\"梯度=链式连乘\"切入，原因列 1-2 条、缓解列 2-3 条即可拿满分。残差连接和 LayerNorm 是 Transformer 两大保梯度机制，务必答出；RNN 场景可补 LSTM/Attention。",
+        "tags": [
+          "gradient",
+          "vanishing",
+          "residual"
+        ],
+        "week": "week2-深度学习基础",
+        "project": "none",
+        "stack": "transformer",
+        "variants": [
+          "残差连接为什么能缓解梯度消失？写出梯度表达式。",
+          "梯度爆炸一般怎么处理？梯度裁剪的原理是什么？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-001",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "在 FC/MCP/CLI 三层工具调用架构中，\"把 shell 当作模型可调用的通用工具：模型生成命令字符串，宿主沙箱执行后把 stdout/stderr 回传模型解读\"属于哪一层？",
+        "options": [
+          "A. 意图生成层（Function Call）",
+          "B. 协议接入层（MCP）",
+          "C. 执行实现层（CLI）",
+          "D. 记忆检索层（RAG）"
+        ],
+        "answer": "C",
+        "explanation": "三层架构：Function Call 是模型能力层（意图生成，输出 name+args 结构化指令）、MCP 是协议标准层（接入规范，工具发现/鉴权）、CLI 是工具实现层（执行手段，把 shell 当通用工具）。CLI 通常仍由 Function Call 触发（run_shell 工具），本质是\"与其为每个操作写工具，不如把整个 shell 交给模型\"——一个 run_shell 能抵无数工具。",
+        "tags": [
+          "agent",
+          "tool-calling",
+          "cli"
+        ],
+        "week": "week11-工具调用",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "CLI 的两种形态（单一 run_bash vs 具名封装工具）分别适用什么场景？",
+          "为什么说\"一个 run_shell 能抵无数工具\"？它有什么安全风险？",
+          "使用 CLI 时应该把命令行当作什么级别的用户对待？为什么必须配沙箱？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-002",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "真实生产系统中，Function Calling、MCP、CLI 三者是怎样的关系？",
+        "options": [
+          "A. 三选一：工具少用 FC、工具多用 MCP、工程师场景用 CLI，只能互斥选一个",
+          "B. 分层协作不互斥：Function Call 生成意图 → 经 MCP 发现+鉴权 → 由 CLI 或具名工具执行，三层叠加成一套栈",
+          "C. MCP 是最底层的执行手段，CLI 是最上层的协议标准，FC 在中间",
+          "D. 三者是同一能力的三种叫法，本质完全相同"
+        ],
+        "answer": "B",
+        "explanation": "三者分层不互斥：FC 是指令（意图），MCP 是协议与门禁（接入），CLI 是双手（执行）——真实系统三层叠加。模型先输出 FC 意图，经 MCP 动态发现工具并鉴权，最终由 CLI 或具名工具执行。选型参考：工具少/快速原型→Function Call；多工具生态/跨产品→MCP；工程师场景/现成命令→CLI+沙箱；企业级高安全→MCP+Function Call。MCP 核心价值是把 M×N 对接降成 M+N 线性扩展。",
+        "tags": [
+          "agent",
+          "tool-calling",
+          "mcp",
+          "cli"
+        ],
+        "week": "week11-工具调用",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "什么时候优先选 MCP？什么时候纯 Function Call 就够？",
+          "三种方式的接入成本从低到高怎么排？为什么？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-003",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "Agent 循环中，\"连续几步反复调用同一个工具、传入同样的参数\"这个现象，最应该用哪种手段拦截？",
+        "options": [
+          "A. 最大步数硬限制（max_steps）",
+          "B. 重复 Action 检测：识别\"相同工具+相同参数\"的循环调用，打断并提示换方法",
+          "C. Observation 质量监控：检测返回结果没有新信息",
+          "D. 反思机制：多步无进展时让模型停下来重新想思路"
+        ],
+        "answer": "B",
+        "explanation": "防死循环四手段各司其职：最大步数是兜底硬限制；重复 Action 检测专门拦截\"反复调同一工具同一参数\"的重试循环；Observation 质量监控管\"返回结果无新信息，提示换方法\"；反思机制管\"走了 N 步还没进展，让模型停下反思是不是思路错了\"。四者配合使用，生产实践 max_steps 通常设 5-15。无论模型多强，最大步数硬限制都必须有。",
+        "tags": [
+          "agent",
+          "react",
+          "死循环"
+        ],
+        "week": "week12-AGENT",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "Agent 循环的终止条件有哪几类？",
+          "最大步数设太大或太小分别有什么问题？",
+          "反思机制和重复 Action 检测的区别是什么？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-004",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "关于 Skill（技能）的定位，下列说法最准确的是？",
+        "options": [
+          "A. Skill 是给 Agent 的\"程序性记忆\"：封装行为逻辑 + 内嵌知识 + 工具调用，可复用、可渐进式加载",
+          "B. Skill 就是函数调用（Function Call），只是换了个名字",
+          "C. Skill 是外部向量库的一种检索索引",
+          "D. Skill 是模型微调时的一种数据格式"
+        ],
+        "answer": "A",
+        "explanation": "Skill 是 Agent 的程序性记忆（过程性知识：怎么做一件事的完整流程），区别于声明性记忆（事实/偏好）。Skills = 行为逻辑 + 内嵌知识 + 工具调用 + 渐进式 Context 管理；它是 FC/MCP/RAG 的上层调度者，FC/MCP/RAG 都是 Skill 内部可选执行模块，不是替代关系。设计核心是单一职责：一个 Skill 做一件事，拆分后更易测试复用。",
+        "tags": [
+          "agent",
+          "skill",
+          "harness"
+        ],
+        "week": "week13-harness和skills",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "Skill 和 Function Call 的本质区别是什么？",
+          "为什么说 Skill 是\"程序性记忆\"？它和声明性记忆有什么区别？",
+          "Skill 的四种形态（纯代码工具/工作流编排/知识复合型/元技能）分别是什么？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-005",
+        "difficulty": "hard",
+        "type": "single",
+        "question": "自进化 Agent 的\"个体学习（运行时自改进）\"机制，其核心工作方式是什么？",
+        "options": [
+          "A. 模型每次回答前都重新读取并对比全部 Skill，选择最优的用",
+          "B. Nudge 触发：每 N 次工具调用后异步派生后台回顾 Agent，审查对话快照，用 skill_manage(create/patch) 把经验沉淀成或更新 Skill",
+          "C. 用参数量更大的模型定期对全部 Skill 做全量重写",
+          "D. 每次任务失败就把失败日志直接追加进 system prompt，越堆越长"
+        ],
+        "answer": "B",
+        "explanation": "个体学习是经验/失败驱动：每 10 次工具调用触发一次 Nudge，在响应交付后（不抢占注意力）非同步派生独立后台回顾 Agent，审查对话快照判断是否有值得沉淀的经验，用 skill_manage(create/patch) 写回 Skill。关键约束：nudge_interval=0 禁止嵌套触发（防无限递归）、max_iterations 轻量执行（如 20）、主动调用归零（避免刚创建又提醒）。自进化的本质是评估驱动——没有评估集就没有进化方向。",
+        "tags": [
+          "agent",
+          "self-evolving",
+          "skill",
+          "nudge"
+        ],
+        "week": "week14-自进化agent",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "自进化的两层机制（个体学习 + 种群进化）分别是什么？有什么区别？",
+          "为什么 Nudge 要在\"响应交付后\"异步触发，而不是回答前？",
+          "自进化引擎有哪些安全边界（防嵌套/轻量化约束）？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-006",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "关于提升工具调用准确率，以下说法错误的是？",
+        "options": [
+          "A. 工具 description 写清楚\"做什么/什么时候用/参数含义\"，直接影响模型何时调用、怎么调用",
+          "B. 参数加枚举值让模型从候选中选，比自由发挥更稳",
+          "C. 用 JSON Schema 约束解码（guided_json）保证参数格式 100% 合法，就能彻底解决工具选错的问题",
+          "D. 让模型先 Thought 再 Action，先想清楚再调用，准确率更高"
+        ],
+        "answer": "C",
+        "explanation": "约束解码只保证\"输出格式 100% 合法\"（Schema 通过率从 60-80% 提升到 100%，速度影响 <5%），但格式合法 ≠ 调用了正确的工具。工具选错是语义/意图决策问题，要靠描述清晰、few-shot 示例、工具路由、先 Thought 再 Action 等手段解决。A/B/D 都是有效的准确率提升手段。描述模糊正是工具调用失败的主因之一。",
+        "tags": [
+          "agent",
+          "tool-calling",
+          "准确率",
+          "guided-json"
+        ],
+        "week": "week11-工具调用",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "约束解码和\"让模型自己吐 JSON\"相比强在哪？它解决不了什么问题？",
+          "工具路由（先分大类、再在小类里选）为什么能提升准确率？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-007",
+        "difficulty": "medium",
+        "type": "boolean",
+        "question": "Agent 记忆系统设计时，把对话中的信息尽量完整地记下来（记得越多越好），这样长期记忆最全、Agent 表现最好。",
+        "answer": false,
+        "explanation": "设计原则恰恰相反：\"重要的记下来，没用的忘掉\"——记忆太多反而会干扰当前推理、污染上下文。四层记忆各司其职：工作记忆（当前对话上下文）→ 短期记忆（最近 N 轮）→ 长期记忆（重要知识/偏好/事实）→ 语义记忆（向量库+全文检索做模糊召回）。靠 Memory Flush（对话结束把工作记忆里的重要信息三趟提取：知识点/偏好/待办，写入长期记忆）和 Compaction（长期记忆条目 >50 自动合并精简，防止无限膨胀）保证记忆\"精\"而非\"多\"。",
+        "tags": [
+          "agent",
+          "memory",
+          "compaction",
+          "flush"
+        ],
+        "week": "week12-AGENT",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "Memory Flush 和 Compaction 分别解决什么问题？触发条件是什么？",
+          "四层记忆分别用什么存储？为什么这么分层？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-008",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "Skills 范式是 Function Calling、MCP、RAG 的上层调度者——FC/MCP/RAG 都可以作为 Skill 内部的执行模块，四者不互斥。",
+        "answer": true,
+        "explanation": "演进路径：Function Call（2023 单次调用）→ MCP（2024 标准化接口）→ RAG（知识检索注入）→ Skills（2024-25 封装行为+知识，渐进式加载）。Skills 为解决\"能力越强、上下文越重、推理越低效\"的核心矛盾而生：工具膨胀（定义涌入 prompt，误触发率上升）、上下文爆炸（工具描述+系统 Prompt 占 65%+ 非任务内容，成本 2-3x 倍增）、能力模糊（调用与知识检索混杂）。Skill 内部可内嵌 RAG 作为知识获取步骤、调用 FC 作为执行原语——是上层调度者，不是替代。",
+        "tags": [
+          "agent",
+          "skill",
+          "harness"
+        ],
+        "week": "week13-harness和skills",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "Skills 范式要解决的核心矛盾是什么？",
+          "演进路径 FC → MCP → RAG → Skills 每一步分别解决了什么问题？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-009",
+        "difficulty": "medium",
+        "type": "boolean",
+        "question": "自进化 Agent 的后台回顾 Agent（负责把经验写成 Skill）必须禁止嵌套触发（如 nudge_interval=0），否则会陷入无限递归。",
+        "answer": true,
+        "explanation": "如果后台回顾 Agent 自己也在跑 Agent 循环、也能触发 Nudge，就会形成\"回顾 Agent → 又触发 Nudge → 又派生回顾 Agent\"的无限递归。所以个体学习机制强制 nudge_interval=0 禁止嵌套触发，并限制 max_iterations 轻量执行（如 20 次），这是自进化的安全边界之一。类似的，delegate_task 垂直委托会排除 delegate 工具本身，防止子 Agent 递归委派。",
+        "tags": [
+          "agent",
+          "self-evolving",
+          "防递归"
+        ],
+        "week": "week14-自进化agent",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "自进化引擎还有哪些安全边界（除了禁止嵌套触发）？",
+          "为什么要对后台回顾 Agent 做轻量化约束（max_iterations）？如果不约束会怎样？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-010",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "请从多个层面说明：怎么提升 Agent 工具调用的准确率？",
+        "points": [
+          "Prompt/描述层面：工具 description 写清楚\"做什么/什么时候用/参数含义\"（模糊描述是调用失败主因，直接影响模型何时调、怎么调）；参数加枚举值让模型从候选中选而非自由发挥；给 examples（few-shot）展示\"什么情况调用什么工具\"",
+          "技术层面：用支持 function calling 的模型（输出格式由 API 保证），比让模型自己吐 JSON 准得多；用 JSON Schema 约束解码（guided_json）保证参数格式 100% 合法（Schema 通过率 60-80%→100%，速度影响 <5%）；参数校验 + 自动重试，把错误信息回灌让模型修正",
+          "流程层面：工具路由先分类确定大类别、再在小类里选；让模型先 Thought 再 Action，先想清楚再调用，准确率更高",
+          "指出约束解码只保证\"格式合法\"、不解决\"选对工具\"的语义决策问题（加分项）"
+        ],
+        "answer": [
+          "描述清晰 + 枚举约束 + few-shot（Prompt 层）",
+          "约束解码 + 参数校验重试（技术层）",
+          "工具路由 + Thought 先行（流程层）"
+        ],
+        "explanation": "三层缺一不可：描述影响\"何时调、怎么调\"，约束解码保证\"格式对\"，路由和 Thought 保证\"选对工具\"。能指出\"格式合法 ≠ 选对工具\"说明真正理解工具调用系统。",
+        "tags": [
+          "agent",
+          "tool-calling",
+          "准确率"
+        ],
+        "week": "week11-工具调用",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "模型反复调用同一个错误工具，你会从哪些方向排查和修复？",
+          "约束解码（guided_json）的原理是什么？对推理速度影响多大？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-011",
+        "difficulty": "medium",
+        "type": "open",
+        "question": "Agent 循环（ReAct/OTAC）怎么终止？出现死循环时有哪些处理手段？",
+        "points": [
+          "终止条件四类：任务完成（模型输出 Final Answer / 明确说任务完成）；达到最大步数（硬限制防死循环，最兜底必须有）；工具连续调用失败 N 次则终止报错；模型主动放弃（判断信息不够，主动说明需要更多信息）",
+          "死循环预防手段：最大步数硬限制；重复 Action 检测（连续几步同工具同参数则打断）；Observation 质量监控（返回结果没有新信息，提示模型换方法）；反思机制（走了 N 步还没进展，让模型停下来反思是不是思路错了）",
+          "加分项：OTAC 循环的 Check 三决策 PASS/RETRY/ROLLBACK（先做再查，把错误消灭在当步）；幻觉传播缓解（错误 Observation 污染后续推理，用工具层验证/循环层 Check/系统层 RAG+人工审核）"
+        ],
+        "answer": [
+          "终止：Final Answer / 最大步数 / 连续失败 / 主动放弃",
+          "防死循环：步数硬限制 + 重复检测 + 质量监控 + 反思"
+        ],
+        "explanation": "核心是讲清\"终止\"与\"防死循环\"两层：最大步数是最兜底的硬限制必须有；重复 Action 检测、Observation 质量监控、反思机制分别拦截不同类型的空转。能补 OTAC 的 Check（PASS/RETRY/ROLLBACK）和幻觉传播说明有工程认知。",
+        "tags": [
+          "agent",
+          "react",
+          "死循环"
+        ],
+        "week": "week12-AGENT",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "ReAct 循环的局限是什么？OTAC 循环是怎么弥补的？",
+          "幻觉在 Agent 循环中为什么会不断放大？怎么缓解？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "agx-012",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "描述自进化 Agent 的\"失败驱动 Skill 进化\"机制：经验从哪里来、怎么沉淀、怎么系统优化？",
+        "points": [
+          "失败/经验是进化的原始信号：Agent 执行任务失败或发现更好做法时才有进化素材（如 flash-card skill 首次在 Hermes 环境执行必然失败——旧版把 Cursor 的 .cursor 目录硬编码，Hermes 不存在；根因是环境硬编码，是最隐蔽的 bug）",
+          "个体学习（运行时自改进）：Nudge 每 10 次工具调用触发，响应交付后异步派生后台回顾 Agent，审查对话快照，调用 skill_manage(create/patch) 沉淀/更新 Skill；约束 nudge_interval=0 防嵌套、max_iterations 轻量、主动调用归零",
+          "系统优化（种群进化 GEPA）：把 SKILL.md 当\"基因\"，DSPy 遗传算法——突变（LLM 改写指令步骤）/交叉（混合两变体段落）/自然选择（帕累托排序淘汰）；多目标：准确性 + Token 效率 + 鲁棒性，保留帕累托前沿多个优质变体按任务选用",
+          "评估驱动：没有评估集就没有进化方向（如 60 题评估集发现规则盲区）；进化要验证\"零功能损失\"（产物 md5 一致才算成功）"
+        ],
+        "answer": [
+          "失败是信号 → Nudge 后台回顾沉淀成 Skill（个体学习）",
+          "GEPA 把 Skill 当基因，多目标帕累托优化（种群进化）",
+          "评估集驱动 + 零功能损失（md5 一致）验证"
+        ],
+        "explanation": "核心逻辑链条：失败驱动发现经验（Nudge 个体学习）→ 评估驱动系统优化（GEPA 种群进化）→ 验证兜底（评估集 + 零功能损失）。能讲清防嵌套安全边界、\"环境硬编码是最隐蔽的 bug\"案例、帕累托多目标优于单一指标，即可得满分。",
+        "tags": [
+          "agent",
+          "self-evolving",
+          "skill",
+          "gepa"
+        ],
+        "week": "week14-自进化agent",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "为什么说\"环境硬编码是最隐蔽的 bug\"？flash-card 优化案例说明了什么？",
+          "种群进化（GEPA）对比其他方案（Voyager/ADAS/DSPy MIPROv2）强在哪里？",
+          "帕累托多目标优化为什么不要求唯一的\"最优解\"？变体怎么按任务选用？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-001",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "知识图谱中最基本的知识表示单元「三元组」指的是什么？",
+        "options": [
+          "A. (实体, 属性, 属性值)",
+          "B. (主语, 谓语, 宾语)，如（李白, 创作, 静夜思）",
+          "C. (头实体, 尾实体, 向量)",
+          "D. (查询, 上下文, 答案)"
+        ],
+        "answer": "B",
+        "explanation": "三元组 (Subject, Predicate, Object) 是知识图谱的最小知识单元，主语和宾语是实体（节点），谓语是实体间的关系（边）。如（李白, 创作, 静夜思）。A 是属性三元组的一种变体，不是标准定义；C/D 不是知识表示单元。",
+        "tags": [
+          "graph",
+          "knowledge-graph",
+          "triple"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "三元组中的实体、关系和属性分别对应图结构中的什么？",
+          "如何用三元组表示「某公司的子公司」这类关系？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-002",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "相比纯向量检索 RAG，知识图谱/GraphRAG 最核心的增量优势是什么？",
+        "options": [
+          "A. 构建成本更低、索引速度更快",
+          "B. 支持多跳关系推理，且答案路径可溯源、可解释",
+          "C. 能处理超长上下文，不再需要分块",
+          "D. 完全消除 LLM 幻觉"
+        ],
+        "answer": "B",
+        "explanation": "KG 补齐 LLM 的两大短板：幻觉（无溯源）+ 结构推理弱（多跳/关系链不稳）。图结构天然支持沿关系链做多跳推理，且每条答案都有实体/路径可回溯，可解释性高。向量 RAG 做语义相似召回，单跳事实强但多跳弱。A 相反（GraphRAG 成本更高）；D 夸大了能力，只能缓解幻觉（如幻觉核验）。",
+        "tags": [
+          "graphrag",
+          "rag",
+          "multi-hop"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "什么类型的查询适合走图而不是向量检索？",
+          "KG 如何帮助缓解 LLM 的幻觉问题？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-003",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "关于图数据库（如 Neo4j）与向量数据库的本质区别，下列说法正确的是？",
+        "options": [
+          "A. 两者都能高效做语义相似度召回，只是存储格式不同",
+          "B. 图数据库擅长按关系遍历、多跳查询；向量数据库擅长语义相似度检索",
+          "C. 向量数据库基于 Cypher 查询语言，图数据库基于 ANN 索引",
+          "D. 图数据库只能存关系，不能存实体属性"
+        ],
+        "answer": "B",
+        "explanation": "图数据库以节点/边/属性组织数据，针对关系遍历和多跳查询优化（Cypher 查询）；向量数据库以向量 + ANN（近似最近邻）索引为核心，擅长语义相似度召回。两者是互补的：向量负责语义入口找相关，图负责多跳精确推理，不是同一种东西的两种格式。A/C/D 都混淆了两者。",
+        "tags": [
+          "graph",
+          "neo4j",
+          "vector-db",
+          "database"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "在实际 RAG 系统中，图数据库和向量数据库如何协同工作？",
+          "什么场景下只靠向量库不够，需要引入图数据库？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-004",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "GraphRAG 的 Local Search 与 Global Search 两种在线查询模式，分别适合什么类型的问题？",
+        "options": [
+          "A. Local 适合全局主题总结，Global 适合具体实体查询",
+          "B. Local 适合具体实体查询（如「张三和李四在哪些项目合作？」），Global 适合全局主题查询（如「这批论文的核心主题是什么？」）",
+          "C. 两者都只做向量召回，只是排序方式不同",
+          "D. Local 走社区摘要 Map-Reduce，Global 走实体链接 + 邻居扩展"
+        ],
+        "answer": "B",
+        "explanation": "Local Search：实体链接 → k 跳邻居扩展 → 子图提取 → LLM 合成，针对具体实体/关系问答；Global Search：社区摘要分发 → Map 并行生成局部答案 → Reduce 聚合 → LLM 合成，针对跨社区的全局主题总结。A 说反了，C 错（都不做向量召回，走图谱），D 把两种模式的手段对调了。",
+        "tags": [
+          "graphrag",
+          "local-search",
+          "global-search"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "Global Search 的 Map-Reduce 流程中，Map 和 Reduce 各负责什么？",
+          "社区摘要为什么只适合全局主题问题而不适合具体实体问题？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-005",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "GraphRAG 的离线索引成本通常比向量 RAG 高 5-10 倍（因为要调用 LLM 做实体/关系抽取），但能显著提升全局主题问答的准确率（实测约 +30%）。",
+        "answer": true,
+        "explanation": "离线索引阶段 GraphRAG 要对每个文档分块调用 LLM 抽取实体和关系、建图、做 Leiden 社区检测并生成社区摘要，LLM 调用量大，成本是向量 RAG 的 5-10x；但换来全局主题问答准确率提升 30%+。值得为全局主题分析投资，所以选型要看查询类型。",
+        "tags": [
+          "graphrag",
+          "index",
+          "cost"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "既然索引成本高，什么场景下才值得用 GraphRAG？",
+          "有哪些降低 GraphRAG 索引成本的手段？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-006",
+        "difficulty": "medium",
+        "type": "boolean",
+        "question": "在 Graph Engineering（多 Agent 拓扑设计）中，应该让 LLM 自由决定路由和边（即「模型定边、代码定节点内」）。",
+        "answer": false,
+        "explanation": "正确原则是「代码定边、模型定节点内」——路由和拓扑边用确定性 Python 保证可控可审计，LLM 只在节点内部做决策（如是否派发、如何综合）。顺序任务用图反而降性能（SWE-bench 降 1.2-12.8%）；便宜模型做路由、贵模型做推理是落地要点。",
+        "tags": [
+          "graph-engineering",
+          "agent",
+          "orchestration"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "agent",
+        "variants": [
+          "Orchestrator-Workers 和 Pipeline+门 两种拓扑各适合什么场景？",
+          "为什么路由用确定性代码而不是让 LLM 决定更可控？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-007",
+        "difficulty": "medium",
+        "type": "open",
+        "question": "请描述 GraphRAG 的离线索引（构建）流程，从原始文档到可检索的图，并说明每步的作用。",
+        "points": [
+          "原始文档切块（400-600 token），为抽取做准备",
+          "调用 LLM 做实体/关系抽取（Prompt 驱动三元组抽取，Few-shot 零标注）",
+          "基于三元组构建图谱（实体规范化，节点/边/属性入库，如 Neo4j）",
+          "Leiden 社区检测（分层聚类，把图拆成社区，按公司/主题边界聚合）",
+          "为每个社区生成摘要（作为 Global Search 的检索单元，离线快照）",
+          "说明成本高（LLM 调用量大，约向量 RAG 的 5-10x）与收益（全局问答 +30%）"
+        ],
+        "answer": [
+          "分块 → LLM 抽取实体关系 → 建图 → 社区检测 → 社区摘要",
+          "离线一次性构建，在线查询直接读图"
+        ],
+        "explanation": "五步管线。要点：LLM 抽取是成本大头、Leiden 分社区、社区摘要是离线快照（数据变更后必须联动刷新，否则 Global 检索会\"无相关\"）。",
+        "tags": [
+          "graphrag",
+          "knowledge-graph",
+          "pipeline",
+          "index"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "社区摘要是离线快照，数据更新后不刷新会出什么问题？",
+          "实体抽取环节如何做实体规范化，避免同一实体建出多个节点？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "grf-008",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "对比「知识图谱/GraphRAG」「向量 RAG」「长上下文 LLM」三种范式（至少从多跳推理、可解释性、构建成本三维度），并说明主流混合架构如何组织，以及什么查询类型走哪条路。",
+        "points": [
+          "多跳推理：图强（图路径）、向量弱（相似召回）、长上下文中等（依赖 CoT）",
+          "可解释性：图高（路径可溯）、向量低、长上下文低",
+          "构建成本：图高、向量低、长上下文极低",
+          "混合架构三层协同：向量召回（语义入口）→ 图谱推理（多跳精确）→ LLM 生成（自然语言输出）",
+          "查询路由：简单单跳走向量、多跳/可审计走图；选型信号（医疗/金融风控/法律合规走图）",
+          "可提 NL2Cypher 作为轻量替代（直接查图）或幻觉核验（声明转三元组查 KG）"
+        ],
+        "answer": [
+          "三维度对比表（多跳/可解释/成本）",
+          "混合三层：向量召回 → 图推理 → LLM 生成",
+          "按查询类型路由"
+        ],
+        "explanation": "核心是\"不是越复杂越好\"：多跳/关系密集/可审计场景走图，单跳/快速上线走向量，单文档深析走长上下文。混合架构是主流，查询路由决定每类问题走哪条路。答出三维对比 + 路由原则即得高分。",
+        "tags": [
+          "graphrag",
+          "rag",
+          "architecture",
+          "selection"
+        ],
+        "week": "week15-graph和llm",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "金融风控 / 法律合规场景为什么更适合图而不是纯向量检索？",
+          "NL2Cypher 和 GraphRAG 有什么区别？什么时候用 NL2Cypher 更合适？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-001",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "Docker 中「镜像」和「容器」的关系是什么？",
+        "options": [
+          "A. 两者是同一个东西，叫法不同",
+          "B. 镜像是只读模板，容器是镜像的运行实例（带可写层）",
+          "C. 容器是镜像的压缩包",
+          "D. 镜像运行完就自动销毁，容器永久保留"
+        ],
+        "answer": "B",
+        "explanation": "镜像是只读的分层模板（代码+依赖+环境），docker run 基于镜像创建容器，容器拥有独立的可写层和隔离的运行环境。同一个镜像可启动多个容器，互不影响。项目里 docker run -d --name auth -p 443:443 就是「用镜像起容器」的标准姿势。",
+        "tags": [
+          "docker",
+          "container",
+          "devops"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "为什么说镜像是分层的？分层对镜像复用有什么好处？",
+          "docker run 中 -p（端口映射）和 -v（数据卷挂载）分别解决什么问题？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-002",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "Docker 多阶段构建（multi-stage build）的主要作用是什么？",
+        "options": [
+          "A. 让构建过程可视化，方便调试",
+          "B. 在最终镜像里只保留运行所需产物，显著减小镜像体积",
+          "C. 加快源代码编译速度",
+          "D. 支持一个 Dockerfile 构建多种语言"
+        ],
+        "answer": "B",
+        "explanation": "多阶段构建用多个 FROM：第一阶段装编译/安装依赖（工具链、源码），第二阶段只 COPY 运行产物和最小运行依赖。构建依赖不会进最终镜像，体积从几百 MB 降到几十 MB。对 AI 服务（如 RAG 的向量模型、FastAPI 应用）尤其重要：镜像小、拉取快、攻击面小。",
+        "tags": [
+          "docker",
+          "multi-stage",
+          "devops"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "不用多阶段构建的话，镜像为什么会很大？如何看镜像分层大小？",
+          "私有化交付场景下，镜像体积大会带来哪些具体问题？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-003",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "FastAPI 中 async def 路由和普通 def 路由的区别是什么？",
+        "options": [
+          "A. async def 更快，所有路由都应该写成 async def",
+          "B. async def 在事件循环中运行，def 在线程池中运行（不阻塞事件循环）",
+          "C. def 只能处理 GET，async def 才能处理 POST",
+          "D. 两者没有区别，只是语法糖"
+        ],
+        "answer": "B",
+        "explanation": "FastAPI 用 async def 定义协程路由（IO 密集型如调 LLM API 可并发）；普通 def 会被放到线程池执行，避免阻塞事件循环。所以 CPU 密集（向量化、重排）用 def，IO 密集（等模型返回）用 async def。delivery-rag 的 /health、/query 就是 FastAPI + uvicorn 部署的标准形态。",
+        "tags": [
+          "fastapi",
+          "async",
+          "microservice"
+        ],
+        "week": "week9-大模型应用补充",
+        "project": "none",
+        "stack": "inference",
+        "variants": [
+          "uvicorn 启动 FastAPI 应用时 --host 0.0.0.0 和 --port 的含义是什么？",
+          "为什么调 LLM API 的接口适合用 async？GIL 对线程池有什么影响？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-004",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "在 OpenTelemetry 全链路追踪中，一次请求的完整调用链（如 RAG 的检索→重排→生成）称为什么？",
+        "options": [
+          "A. Span",
+          "B. Trace",
+          "C. Log",
+          "D. Metric"
+        ],
+        "answer": "B",
+        "explanation": "Trace 是一条请求的完整调用链，由多个 Span 组成；Span 是链路中的单个操作（如 hybrid_search、generation 各记一个 span，带耗时与属性）。delivery-rag 用 OpenTelemetry 标准埋点，检索/生成/评测逐 span 上报 Phoenix，RAG 命中率与 Faithfulness 可逐题追溯。",
+        "tags": [
+          "observability",
+          "opentelemetry",
+          "phoenix"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "Trace、Span、Metric 三种信号分别解决什么问题？",
+          "在 span 上记录 attribute 和 event（如命中数、token 数）有什么用？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-005",
+        "difficulty": "medium",
+        "type": "single",
+        "question": "RAG 评估中 Faithfulness（忠实度）衡量的是什么？",
+        "options": [
+          "A. 检索结果中正确答案的比例",
+          "B. 答案的每个陈述能否从检索到的上下文中找到依据",
+          "C. 答案生成的速度",
+          "D. 知识库文档的覆盖度"
+        ],
+        "answer": "B",
+        "explanation": "Faithfulness 是防幻觉的核心指标：把答案拆成陈述句，逐句验证能否从上下文溯源。查的是生成环节（Context Precision 才查检索）。课程最佳实践阈值 ≥0.85；delivery-rag 用 DeepSeek-as-Judge 实测 0.967，达标且超出。",
+        "tags": [
+          "rag",
+          "evaluation",
+          "faithfulness"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "Faithfulness 低说明问题在哪个环节？怎么定位是检索还是生成的问题？",
+          "LLM-as-Judge 评估 Faithfulness 的原理和局限是什么？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-006",
+        "difficulty": "easy",
+        "type": "single",
+        "question": "Python 项目中使用 venv 虚拟环境的主要目的是什么？",
+        "options": [
+          "A. 提升代码运行速度",
+          "B. 隔离项目依赖，避免不同项目的包版本互相冲突",
+          "C. 加密源代码",
+          "D. 替代 Docker 实现容器化"
+        ],
+        "answer": "B",
+        "explanation": "venv 为每个项目建立独立 site-packages，避免 A 项目要 fastapi 0.9、B 项目要 1.0 时的版本冲突（踩过：后台任务用系统 python 跑爬虫 → ModuleNotFoundError，必须用 venv 的绝对路径 python）。交付项目（delivery-rag、ticket-diagnose-agent）统一 python3 -m venv .venv + source .venv/bin/activate 起手。",
+        "tags": [
+          "python",
+          "venv",
+          "devops"
+        ],
+        "week": "week1-基本介绍",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "venv 和 conda、Docker 在环境隔离上有什么区别？",
+          "为什么 cron/后台任务里要写 venv 下 python 的绝对路径而不是 python？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-007",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "Docker 容器通过 Linux 内核的 namespace 隔离进程、cgroup 限制资源，因此比虚拟机更轻量（秒级启动、共享宿主机内核）。",
+        "answer": true,
+        "explanation": "namespace 提供隔离（PID/网络/文件系统等），cgroup 限制 CPU/内存，两者都是内核特性，容器因此没有独立内核、启动快、开销小。虚拟机则需要完整的 Guest OS。这也解释了为什么容器适合微服务（FastAPI 单服务一容器）而不适合直接跑需要完整内核的场景。",
+        "tags": [
+          "docker",
+          "namespace",
+          "container"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "容器和虚拟机在安全隔离上的差异是什么？什么时候必须用虚拟机？",
+          "Docker Compose 多服务编排和单容器 docker run 的区别？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-008",
+        "difficulty": "medium",
+        "type": "boolean",
+        "question": "分布式存储中副本数越多系统越安全，所以副本应该尽可能多。",
+        "answer": false,
+        "explanation": "副本增多提升容错，但代价是写放大（每次写都要写 N 份）、空间成本、副本间一致性开销，且副本若放在同一故障域（同机柜/同交换机）会一起故障，多副本形同虚设。工程上 3 副本是常见平衡（容忍单点故障，如 EDS 重要数据至少 3 副本）；还需配合故障域规划和故障重建。",
+        "tags": [
+          "distributed-storage",
+          "replication",
+          "high-availability"
+        ],
+        "week": "week16-大模型结构演进",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "副本放在同一机柜和跨机柜部署，可用性差别有多大？",
+          "除了多副本，分布式存储还有哪些数据保护手段（如纠删码）？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-009",
+        "difficulty": "easy",
+        "type": "boolean",
+        "question": "OpenTelemetry 是开源的可观测性标准（跨语言统一埋点协议），Phoenix 是基于该标准做 AI 应用 trace 可视化与分析的可观测平台，二者配合实现全链路追踪。",
+        "answer": true,
+        "explanation": "OpenTelemetry 提供 SDK/协议（OTLP exporter）负责采集与上报，Phoenix 负责接收、可视化与分析（LangSmith 风格 trace 视图）。delivery-rag 即 OTel 标准埋点 → Phoenix trace 全链路（检索/生成/评测逐 span），Phoenix 不可用时降级为无观测，不影响业务。",
+        "tags": [
+          "observability",
+          "opentelemetry",
+          "phoenix"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "可观测三支柱（Trace/Log/Metric）在排查 RAG 问题时各自能回答什么问题？",
+          "为什么 AI 应用可观测要区分检索、生成、评测三段埋点？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-010",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "你在 delivery-rag 中如何用 Docker + FastAPI 做私有化部署？请说明容器化部署的关键步骤、多阶段构建解决了什么问题，以及私有化场景还要考虑哪些点。",
+        "points": [
+          "基础镜像选择（Python 官方 slim 镜像）+ 复制依赖清单、安装依赖（分层缓存）",
+          "多阶段构建：构建阶段装全部依赖，运行阶段只 COPY 运行产物，镜像体积小、攻击面小",
+          "uvicorn 启动 FastAPI 应用（--host 0.0.0.0 --port 8000），暴露 /health 健康检查、/query 接口",
+          "端口映射 -p、数据卷 -v 挂载知识库/配置，config.vector_store 切换 FAISS/Milvus/ES 后端",
+          "私有化要点：依赖与模型离线打包、数据不出域（企业安全合规/涉密审计）、Phoenix 可观测降级不影响业务"
+        ],
+        "answer": [
+          "Dockerfile 多阶段构建：构建产物只留运行所需",
+          "uvicorn + FastAPI 启动与 /health 健康检查",
+          "私有化：离线依赖 + 数据不出域"
+        ],
+        "explanation": "答出「镜像→容器→启动服务」链路 + 多阶段构建瘦身 + 至少两个私有化考量点得满分。可与简历「全链路私有化独立部署，数据不出域」呼应。",
+        "tags": [
+          "docker",
+          "fastapi",
+          "deployment"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "镜像里装不进向量模型权重时，运行时挂载/下载模型的方案怎么设计？",
+          "多副本部署 FastAPI 服务时，如何做负载均衡和健康检查（容器编排层）？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-011",
+        "difficulty": "hard",
+        "type": "open",
+        "question": "如何为 RAG 系统搭建自动化评测体系？请说明评测集怎么构建、用哪些指标、如何防回归。",
+        "points": [
+          "评测集构建：领域文档为基础，LLM 辅助生成 QA + golden_context 原文校验（delivery-rag 25 篇文档 × 4 题 = 100 条；ticket 300 条程序化构造，带期望标注）",
+          "指标分层：检索层 Hit Rate@K / MRR（查召回与排序），生成层 Faithfulness / Context Precision（查忠实与幻觉），RAGAS 综合框架",
+          "自动化：脚本一键复现（run_ab_eval.py / run_rag_eval_deepseek.py），报告落盘，可对比方案 A/B/C",
+          "防回归：离线 Mock 秒级回归（35 测 0.40s），评测集同时是回归校验锚点，改检索/生成后全量重跑对比基线，新策略上线前做 A/B"
+        ],
+        "answer": [
+          "评测集：领域文档生成 QA + golden_context 校验",
+          "指标：Hit Rate/MRR 查检索，Faithfulness 查生成",
+          "回归：离线秒级 + A/B 对比基线"
+        ],
+        "explanation": "评测集来源可溯源 + 指标分环节 + 自动化可复现 + 回归机制，四点齐全得满分。呼应课程「RAG 评估必须分环节：Faithfulness 查生成、Context Precision 查检索」。",
+        "tags": [
+          "evaluation",
+          "rag",
+          "regression"
+        ],
+        "week": "week10-检索增强生成",
+        "project": "none",
+        "stack": "rag",
+        "variants": [
+          "LLM 生成的评测集如何防止「模型自己出题自己答」的偏差？",
+          "上线后线上效果和离线指标不一致，可能是什么原因？"
+        ],
+        "floor": 4
+      },
+      {
+        "id": "eng-012",
+        "difficulty": "medium",
+        "type": "open",
+        "question": "分布式存储与高可用集群架构中，如何保证数据不丢、服务不中断？请结合你熟悉的 EDS/超融合场景说明关键机制。",
+        "points": [
+          "多副本：重要数据至少 3 副本，容忍单点故障，读写按副本数冗余",
+          "故障域规划：副本跨节点/跨机柜放置，避免同故障域一起失效",
+          "故障重建/自愈：节点故障后自动在健康节点重建副本，恢复冗余度",
+          "高可用集群：服务多副本（负载均衡 + 故障切换），业务无感知迁移（V2V/P2V 迁移场景）",
+          "一致性权衡：副本间数据一致性协议与写放大的取舍（呼应副本数不是越多越好）"
+        ],
+        "answer": [
+          "3 副本 + 跨故障域放置",
+          "故障自动重建、服务负载均衡与切换",
+          "无感知迁移 + 一致性/写放大权衡"
+        ],
+        "explanation": "答出「副本冗余 + 故障域 + 自愈重建 + 高可用切换」四条骨架即可，能讲清副本数与成本/一致性的取舍是加分项。对应简历工作经历（EDS 分布式存储、业务无感知迁移至云）。",
+        "tags": [
+          "distributed-storage",
+          "high-availability",
+          "cluster"
+        ],
+        "week": "week16-大模型结构演进",
+        "project": "none",
+        "stack": "pretrain-sft",
+        "variants": [
+          "3 副本和纠删码（EC）在空间利用率和重建开销上怎么取舍？",
+          "高可用集群的「脑裂」（split-brain）问题是什么？如何避免？"
         ],
         "floor": 4
       }

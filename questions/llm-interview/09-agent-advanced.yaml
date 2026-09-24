@@ -1,0 +1,217 @@
+# Agent 进阶题库（考核体系 V1）
+# 题型：single（单选）/ boolean（判断）/ open（简答，得分点判分）
+# 来源：week11-14 学习笔记（工具调用/Agent/Harness和Skills/自进化Agent）+ 高频面试题 20-24
+# 主题：FC/MCP/CLI 三层架构、工具调用准确率、Agent 记忆系统、循环终止/死循环、Skills 概念、自进化 Agent
+- id: agx-001
+  difficulty: easy
+  type: single
+  question: 在 FC/MCP/CLI 三层工具调用架构中，"把 shell 当作模型可调用的通用工具：模型生成命令字符串，宿主沙箱执行后把 stdout/stderr 回传模型解读"属于哪一层？
+  options:
+    - A. 意图生成层（Function Call）
+    - B. 协议接入层（MCP）
+    - C. 执行实现层（CLI）
+    - D. 记忆检索层（RAG）
+  answer: C
+  explanation: 三层架构：Function Call 是模型能力层（意图生成，输出 name+args 结构化指令）、MCP 是协议标准层（接入规范，工具发现/鉴权）、CLI 是工具实现层（执行手段，把 shell 当通用工具）。CLI 通常仍由 Function Call 触发（run_shell 工具），本质是"与其为每个操作写工具，不如把整个 shell 交给模型"——一个 run_shell 能抵无数工具。
+  tags: [agent, tool-calling, cli]
+  week: week11-工具调用
+  project: none
+  stack: agent
+  variants:
+    - CLI 的两种形态（单一 run_bash vs 具名封装工具）分别适用什么场景？
+    - 为什么说"一个 run_shell 能抵无数工具"？它有什么安全风险？
+    - 使用 CLI 时应该把命令行当作什么级别的用户对待？为什么必须配沙箱？
+- id: agx-002
+  difficulty: medium
+  type: single
+  question: 真实生产系统中，Function Calling、MCP、CLI 三者是怎样的关系？
+  options:
+    - A. 三选一：工具少用 FC、工具多用 MCP、工程师场景用 CLI，只能互斥选一个
+    - B. 分层协作不互斥：Function Call 生成意图 → 经 MCP 发现+鉴权 → 由 CLI 或具名工具执行，三层叠加成一套栈
+    - C. MCP 是最底层的执行手段，CLI 是最上层的协议标准，FC 在中间
+    - D. 三者是同一能力的三种叫法，本质完全相同
+  answer: B
+  explanation: 三者分层不互斥：FC 是指令（意图），MCP 是协议与门禁（接入），CLI 是双手（执行）——真实系统三层叠加。模型先输出 FC 意图，经 MCP 动态发现工具并鉴权，最终由 CLI 或具名工具执行。选型参考：工具少/快速原型→Function Call；多工具生态/跨产品→MCP；工程师场景/现成命令→CLI+沙箱；企业级高安全→MCP+Function Call。MCP 核心价值是把 M×N 对接降成 M+N 线性扩展。
+  tags: [agent, tool-calling, mcp, cli]
+  week: week11-工具调用
+  project: none
+  stack: agent
+  variants:
+    - 什么时候优先选 MCP？什么时候纯 Function Call 就够？
+    - 三种方式的接入成本从低到高怎么排？为什么？
+- id: agx-003
+  difficulty: medium
+  type: single
+  question: Agent 循环中，"连续几步反复调用同一个工具、传入同样的参数"这个现象，最应该用哪种手段拦截？
+  options:
+    - A. 最大步数硬限制（max_steps）
+    - B. 重复 Action 检测：识别"相同工具+相同参数"的循环调用，打断并提示换方法
+    - C. Observation 质量监控：检测返回结果没有新信息
+    - D. 反思机制：多步无进展时让模型停下来重新想思路
+  answer: B
+  explanation: 防死循环四手段各司其职：最大步数是兜底硬限制；重复 Action 检测专门拦截"反复调同一工具同一参数"的重试循环；Observation 质量监控管"返回结果无新信息，提示换方法"；反思机制管"走了 N 步还没进展，让模型停下反思是不是思路错了"。四者配合使用，生产实践 max_steps 通常设 5-15。无论模型多强，最大步数硬限制都必须有。
+  tags: [agent, react, 死循环]
+  week: week12-AGENT
+  project: none
+  stack: agent
+  variants:
+    - Agent 循环的终止条件有哪几类？
+    - 最大步数设太大或太小分别有什么问题？
+    - 反思机制和重复 Action 检测的区别是什么？
+- id: agx-004
+  difficulty: easy
+  type: single
+  question: 关于 Skill（技能）的定位，下列说法最准确的是？
+  options:
+    - A. Skill 是给 Agent 的"程序性记忆"：封装行为逻辑 + 内嵌知识 + 工具调用，可复用、可渐进式加载
+    - B. Skill 就是函数调用（Function Call），只是换了个名字
+    - C. Skill 是外部向量库的一种检索索引
+    - D. Skill 是模型微调时的一种数据格式
+  answer: A
+  explanation: Skill 是 Agent 的程序性记忆（过程性知识：怎么做一件事的完整流程），区别于声明性记忆（事实/偏好）。Skills = 行为逻辑 + 内嵌知识 + 工具调用 + 渐进式 Context 管理；它是 FC/MCP/RAG 的上层调度者，FC/MCP/RAG 都是 Skill 内部可选执行模块，不是替代关系。设计核心是单一职责：一个 Skill 做一件事，拆分后更易测试复用。
+  tags: [agent, skill, harness]
+  week: week13-harness和skills
+  project: none
+  stack: agent
+  variants:
+    - Skill 和 Function Call 的本质区别是什么？
+    - 为什么说 Skill 是"程序性记忆"？它和声明性记忆有什么区别？
+    - Skill 的四种形态（纯代码工具/工作流编排/知识复合型/元技能）分别是什么？
+- id: agx-005
+  difficulty: hard
+  type: single
+  question: 自进化 Agent 的"个体学习（运行时自改进）"机制，其核心工作方式是什么？
+  options:
+    - A. 模型每次回答前都重新读取并对比全部 Skill，选择最优的用
+    - B. Nudge 触发：每 N 次工具调用后异步派生后台回顾 Agent，审查对话快照，用 skill_manage(create/patch) 把经验沉淀成或更新 Skill
+    - C. 用参数量更大的模型定期对全部 Skill 做全量重写
+    - D. 每次任务失败就把失败日志直接追加进 system prompt，越堆越长
+  answer: B
+  explanation: 个体学习是经验/失败驱动：每 10 次工具调用触发一次 Nudge，在响应交付后（不抢占注意力）非同步派生独立后台回顾 Agent，审查对话快照判断是否有值得沉淀的经验，用 skill_manage(create/patch) 写回 Skill。关键约束：nudge_interval=0 禁止嵌套触发（防无限递归）、max_iterations 轻量执行（如 20）、主动调用归零（避免刚创建又提醒）。自进化的本质是评估驱动——没有评估集就没有进化方向。
+  tags: [agent, self-evolving, skill, nudge]
+  week: week14-自进化agent
+  project: none
+  stack: agent
+  variants:
+    - 自进化的两层机制（个体学习 + 种群进化）分别是什么？有什么区别？
+    - 为什么 Nudge 要在"响应交付后"异步触发，而不是回答前？
+    - 自进化引擎有哪些安全边界（防嵌套/轻量化约束）？
+- id: agx-006
+  difficulty: medium
+  type: single
+  question: 关于提升工具调用准确率，以下说法错误的是？
+  options:
+    - A. 工具 description 写清楚"做什么/什么时候用/参数含义"，直接影响模型何时调用、怎么调用
+    - B. 参数加枚举值让模型从候选中选，比自由发挥更稳
+    - C. 用 JSON Schema 约束解码（guided_json）保证参数格式 100% 合法，就能彻底解决工具选错的问题
+    - D. 让模型先 Thought 再 Action，先想清楚再调用，准确率更高
+  answer: C
+  explanation: 约束解码只保证"输出格式 100% 合法"（Schema 通过率从 60-80% 提升到 100%，速度影响 <5%），但格式合法 ≠ 调用了正确的工具。工具选错是语义/意图决策问题，要靠描述清晰、few-shot 示例、工具路由、先 Thought 再 Action 等手段解决。A/B/D 都是有效的准确率提升手段。描述模糊正是工具调用失败的主因之一。
+  tags: [agent, tool-calling, 准确率, guided-json]
+  week: week11-工具调用
+  project: none
+  stack: agent
+  variants:
+    - 约束解码和"让模型自己吐 JSON"相比强在哪？它解决不了什么问题？
+    - 工具路由（先分大类、再在小类里选）为什么能提升准确率？
+- id: agx-007
+  difficulty: medium
+  type: boolean
+  question: Agent 记忆系统设计时，把对话中的信息尽量完整地记下来（记得越多越好），这样长期记忆最全、Agent 表现最好。
+  answer: false
+  explanation: 设计原则恰恰相反："重要的记下来，没用的忘掉"——记忆太多反而会干扰当前推理、污染上下文。四层记忆各司其职：工作记忆（当前对话上下文）→ 短期记忆（最近 N 轮）→ 长期记忆（重要知识/偏好/事实）→ 语义记忆（向量库+全文检索做模糊召回）。靠 Memory Flush（对话结束把工作记忆里的重要信息三趟提取：知识点/偏好/待办，写入长期记忆）和 Compaction（长期记忆条目 >50 自动合并精简，防止无限膨胀）保证记忆"精"而非"多"。
+  tags: [agent, memory, compaction, flush]
+  week: week12-AGENT
+  project: none
+  stack: agent
+  variants:
+    - Memory Flush 和 Compaction 分别解决什么问题？触发条件是什么？
+    - 四层记忆分别用什么存储？为什么这么分层？
+- id: agx-008
+  difficulty: easy
+  type: boolean
+  question: Skills 范式是 Function Calling、MCP、RAG 的上层调度者——FC/MCP/RAG 都可以作为 Skill 内部的执行模块，四者不互斥。
+  answer: true
+  explanation: 演进路径：Function Call（2023 单次调用）→ MCP（2024 标准化接口）→ RAG（知识检索注入）→ Skills（2024-25 封装行为+知识，渐进式加载）。Skills 为解决"能力越强、上下文越重、推理越低效"的核心矛盾而生：工具膨胀（定义涌入 prompt，误触发率上升）、上下文爆炸（工具描述+系统 Prompt 占 65%+ 非任务内容，成本 2-3x 倍增）、能力模糊（调用与知识检索混杂）。Skill 内部可内嵌 RAG 作为知识获取步骤、调用 FC 作为执行原语——是上层调度者，不是替代。
+  tags: [agent, skill, harness]
+  week: week13-harness和skills
+  project: none
+  stack: agent
+  variants:
+    - Skills 范式要解决的核心矛盾是什么？
+    - 演进路径 FC → MCP → RAG → Skills 每一步分别解决了什么问题？
+- id: agx-009
+  difficulty: medium
+  type: boolean
+  question: 自进化 Agent 的后台回顾 Agent（负责把经验写成 Skill）必须禁止嵌套触发（如 nudge_interval=0），否则会陷入无限递归。
+  answer: true
+  explanation: 如果后台回顾 Agent 自己也在跑 Agent 循环、也能触发 Nudge，就会形成"回顾 Agent → 又触发 Nudge → 又派生回顾 Agent"的无限递归。所以个体学习机制强制 nudge_interval=0 禁止嵌套触发，并限制 max_iterations 轻量执行（如 20 次），这是自进化的安全边界之一。类似的，delegate_task 垂直委托会排除 delegate 工具本身，防止子 Agent 递归委派。
+  tags: [agent, self-evolving, 防递归]
+  week: week14-自进化agent
+  project: none
+  stack: agent
+  variants:
+    - 自进化引擎还有哪些安全边界（除了禁止嵌套触发）？
+    - 为什么要对后台回顾 Agent 做轻量化约束（max_iterations）？如果不约束会怎样？
+- id: agx-010
+  difficulty: hard
+  type: open
+  question: 请从多个层面说明：怎么提升 Agent 工具调用的准确率？
+  points:
+    - Prompt/描述层面：工具 description 写清楚"做什么/什么时候用/参数含义"（模糊描述是调用失败主因，直接影响模型何时调、怎么调）；参数加枚举值让模型从候选中选而非自由发挥；给 examples（few-shot）展示"什么情况调用什么工具"
+    - 技术层面：用支持 function calling 的模型（输出格式由 API 保证），比让模型自己吐 JSON 准得多；用 JSON Schema 约束解码（guided_json）保证参数格式 100% 合法（Schema 通过率 60-80%→100%，速度影响 <5%）；参数校验 + 自动重试，把错误信息回灌让模型修正
+    - 流程层面：工具路由先分类确定大类别、再在小类里选；让模型先 Thought 再 Action，先想清楚再调用，准确率更高
+    - 指出约束解码只保证"格式合法"、不解决"选对工具"的语义决策问题（加分项）
+  answer:
+    - 描述清晰 + 枚举约束 + few-shot（Prompt 层）
+    - 约束解码 + 参数校验重试（技术层）
+    - 工具路由 + Thought 先行（流程层）
+  explanation: 三层缺一不可：描述影响"何时调、怎么调"，约束解码保证"格式对"，路由和 Thought 保证"选对工具"。能指出"格式合法 ≠ 选对工具"说明真正理解工具调用系统。
+  tags: [agent, tool-calling, 准确率]
+  week: week11-工具调用
+  project: none
+  stack: agent
+  variants:
+    - 模型反复调用同一个错误工具，你会从哪些方向排查和修复？
+    - 约束解码（guided_json）的原理是什么？对推理速度影响多大？
+- id: agx-011
+  difficulty: medium
+  type: open
+  question: Agent 循环（ReAct/OTAC）怎么终止？出现死循环时有哪些处理手段？
+  points:
+    - 终止条件四类：任务完成（模型输出 Final Answer / 明确说任务完成）；达到最大步数（硬限制防死循环，最兜底必须有）；工具连续调用失败 N 次则终止报错；模型主动放弃（判断信息不够，主动说明需要更多信息）
+    - 死循环预防手段：最大步数硬限制；重复 Action 检测（连续几步同工具同参数则打断）；Observation 质量监控（返回结果没有新信息，提示模型换方法）；反思机制（走了 N 步还没进展，让模型停下来反思是不是思路错了）
+    - 加分项：OTAC 循环的 Check 三决策 PASS/RETRY/ROLLBACK（先做再查，把错误消灭在当步）；幻觉传播缓解（错误 Observation 污染后续推理，用工具层验证/循环层 Check/系统层 RAG+人工审核）
+  answer:
+    - 终止：Final Answer / 最大步数 / 连续失败 / 主动放弃
+    - 防死循环：步数硬限制 + 重复检测 + 质量监控 + 反思
+  explanation: 核心是讲清"终止"与"防死循环"两层：最大步数是最兜底的硬限制必须有；重复 Action 检测、Observation 质量监控、反思机制分别拦截不同类型的空转。能补 OTAC 的 Check（PASS/RETRY/ROLLBACK）和幻觉传播说明有工程认知。
+  tags: [agent, react, 死循环]
+  week: week12-AGENT
+  project: none
+  stack: agent
+  variants:
+    - ReAct 循环的局限是什么？OTAC 循环是怎么弥补的？
+    - 幻觉在 Agent 循环中为什么会不断放大？怎么缓解？
+- id: agx-012
+  difficulty: hard
+  type: open
+  question: 描述自进化 Agent 的"失败驱动 Skill 进化"机制：经验从哪里来、怎么沉淀、怎么系统优化？
+  points:
+    - 失败/经验是进化的原始信号：Agent 执行任务失败或发现更好做法时才有进化素材（如 flash-card skill 首次在 Hermes 环境执行必然失败——旧版把 Cursor 的 .cursor 目录硬编码，Hermes 不存在；根因是环境硬编码，是最隐蔽的 bug）
+    - 个体学习（运行时自改进）：Nudge 每 10 次工具调用触发，响应交付后异步派生后台回顾 Agent，审查对话快照，调用 skill_manage(create/patch) 沉淀/更新 Skill；约束 nudge_interval=0 防嵌套、max_iterations 轻量、主动调用归零
+    - 系统优化（种群进化 GEPA）：把 SKILL.md 当"基因"，DSPy 遗传算法——突变（LLM 改写指令步骤）/交叉（混合两变体段落）/自然选择（帕累托排序淘汰）；多目标：准确性 + Token 效率 + 鲁棒性，保留帕累托前沿多个优质变体按任务选用
+    - 评估驱动：没有评估集就没有进化方向（如 60 题评估集发现规则盲区）；进化要验证"零功能损失"（产物 md5 一致才算成功）
+  answer:
+    - 失败是信号 → Nudge 后台回顾沉淀成 Skill（个体学习）
+    - GEPA 把 Skill 当基因，多目标帕累托优化（种群进化）
+    - 评估集驱动 + 零功能损失（md5 一致）验证
+  explanation: 核心逻辑链条：失败驱动发现经验（Nudge 个体学习）→ 评估驱动系统优化（GEPA 种群进化）→ 验证兜底（评估集 + 零功能损失）。能讲清防嵌套安全边界、"环境硬编码是最隐蔽的 bug"案例、帕累托多目标优于单一指标，即可得满分。
+  tags: [agent, self-evolving, skill, gepa]
+  week: week14-自进化agent
+  project: none
+  stack: agent
+  variants:
+    - 为什么说"环境硬编码是最隐蔽的 bug"？flash-card 优化案例说明了什么？
+    - 种群进化（GEPA）对比其他方案（Voyager/ADAS/DSPy MIPROv2）强在哪里？
+    - 帕累托多目标优化为什么不要求唯一的"最优解"？变体怎么按任务选用？

@@ -1,0 +1,218 @@
+# 深度学习基础与组件题库（考核体系 V1）
+# 题型：single（单选）/ boolean（判断）/ open（简答，得分点判分）
+# 来源：week2 深度学习基本原理笔记 + week3 深度学习常用组件笔记 + 速查卡 01-Transformer核心原理
+- id: ml-001
+  difficulty: easy
+  type: single
+  question: 关于 ReLU 激活函数（f(x)=max(0,x)），下列说法正确的是？
+  options:
+    - A. 计算简单，且正区间导数为 1，能缓解梯度消失
+    - B. 输出以 0 为中心，天然利于收敛
+    - C. 输出范围在 0~1 之间，适合做概率输出
+    - D. 导数处处非零，不存在神经元死亡问题
+  answer: A
+  explanation: ReLU=max(0,x)，只需比较取最大值，是计算最简单的激活函数；x>0 时导数为 1，梯度连乘不会快速衰减，缓解梯度消失。B 错——ReLU 输出非负、不是零中心（零中心的是 Tanh）；C 是 Sigmoid 的特点；D 错——x≤0 时导数为 0，会出现神经元"死亡"。
+  tags: [activation, relu]
+  week: week2-深度学习基础
+  project: none
+  stack: transformer
+  variants:
+    - Transformer 的 FFN 用的什么激活函数？GELU 相比 ReLU 有什么特点？
+    - 什么是"死亡 ReLU"？如何缓解？
+    - ReLU 相比 Sigmoid 为什么更适合深层网络？
+- id: ml-002
+  difficulty: easy
+  type: single
+  question: 关于 Sigmoid 激活函数 σ(x)=1/(1+e⁻ˣ)，下列说法正确的是？
+  options:
+    - A. 输出范围 0~1，适合二分类输出层，其导数 = σ(x)(1−σ(x))
+    - B. 输出范围 −1~1，零中心，适合隐藏层
+    - C. 导数恒为 1，不会出现饱和
+    - D. 多分类任务的标配输出激活函数
+  answer: A
+  explanation: Sigmoid 输出 0~1，可解释为二分类概率，常用于二分类输出层；其导数 σ(x)(1−σ(x)) 是高频考点。B 是 Tanh（输出 −1~1、零中心，优于 Sigmoid）；C 错——Sigmoid 两端导数趋近 0 会饱和；D 是 Softmax（多分类输出层，输出概率分布）。
+  tags: [activation, sigmoid]
+  week: week2-深度学习基础
+  project: none
+  stack: pretrain-sft
+  variants:
+    - Sigmoid 放在深层隐藏层为什么容易引起梯度消失？
+    - Sigmoid 和 Softmax 分别在什么场景使用？
+- id: ml-003
+  difficulty: medium
+  type: single
+  question: Adam 优化器相比 SGD 的核心改进是什么？
+  options:
+    - A. 同时用一阶矩（动量）和二阶矩（梯度方差）为每个参数自适应调整学习率
+    - B. 完全固定学习率，只按梯度符号更新
+    - C. 每次只用单个样本更新，噪声更大
+    - D. 不需要设置任何超参数
+  answer: A
+  explanation: Adam=动量+自适应学习率：一阶矩 mₜ 做指数移动平均平滑噪声（β₁≈0.9），二阶矩 vₜ 估计梯度尺度（β₂≈0.999），更新 θₜ=θₜ₋₁−η·m̂ₜ/(√v̂ₜ+ε)，并做偏差修正消除初期低估。效果上梯度大的参数步长自动缩小、梯度小的放大。SGD 的局限是学习率难调（过大震荡/过小慢）、各参数同等对待、鞍点停滞。实践建议：Adam 是默认首选，尤其 NLP/Transformer。
+  tags: [optimizer, adam]
+  week: week3-深度学习组件
+  project: none
+  stack: pretrain-sft
+  variants:
+    - 简述 Adam 的五个步骤（从算梯度到参数更新）？
+    - Adam 里的 β₁、β₂ 分别控制什么？偏差修正解决什么问题？
+    - 什么情况下 SGD+Momentum 反而比 Adam 好？
+- id: ml-004
+  difficulty: medium
+  type: single
+  question: 关于损失函数的选择，下列说法正确的是？
+  options:
+    - A. 分类任务标配 Softmax+交叉熵，回归任务常用 MSE
+    - B. 分类任务用 MSE，回归任务用交叉熵
+    - C. 交叉熵只能用于二分类任务
+    - D. MSE 的输出一定可以解释为概率
+  answer: A
+  explanation: MSE=(ŷ−y)² 衡量数值差距，适合回归；交叉熵 L=−Σyᵢlog(ŷᵢ) 衡量预测分布与真实分布的差异，配合 Softmax（输出概率分布、和为 1）是分类标配——课程实战手写 softmax+onehot+log 交叉熵与 torch 结果完全一致（0.7676）。三者闭环：损失函数给目标 → 反向传播算梯度 → 梯度下降更新。
+  tags: [loss, cross-entropy]
+  week: week2-深度学习基础
+  project: none
+  stack: pretrain-sft
+  variants:
+    - 为什么交叉熵要和 Softmax 配合使用？
+    - nn.CrossEntropyLoss 内部已经包含 Softmax，它和手动先 Softmax 再算交叉熵有什么区别？
+- id: ml-005
+  difficulty: easy
+  type: single
+  question: Transformer/BERT 等 NLP 模型为什么用 LayerNorm 而不用 BatchNorm？
+  options:
+    - A. BN 依赖 batch 统计量，NLP 序列长度不一、batch 又小，统计不稳定
+    - B. LN 在 batch 维度归一化，依赖 batch size
+    - C. BN 不需要可学习参数 γ、β
+    - D. LN 无法在 GPU 上运行
+  answer: A
+  explanation: BN 在 batch 方向归一化（每个特征维），训练用当前 batch 统计、推理用移动平均；NLP 序列长度不一、padding 多，且 batch 小（显存限制），BN 统计量不准。LN 对每个样本在特征方向归一化，不依赖 batch 和序列长度，训练/推理一致，是 Transformer/BERT 的标准。归一化公式 x̂=(x−μ)/√(σ²+ε)，γ、β 可学习。
+  tags: [normalization, layernorm]
+  week: week3-深度学习组件
+  project: none
+  stack: transformer
+  variants:
+    - 什么场景下 BatchNorm 反而更合适？
+    - 现代大模型常用的 RMSNorm 和 LayerNorm 有什么区别？
+    - 归一化公式里的 γ、β 是什么？为什么需要它们？
+- id: ml-006
+  difficulty: hard
+  type: single
+  question: PyTorch 默认采用 inverted dropout，下列说法正确的是？
+  options:
+    - A. 训练时输出除以 (1−p) 保持期望不变，推理时不做任何缩放
+    - B. 训练和推理时都按 p 随机屏蔽神经元
+    - C. 只有推理时做屏蔽，训练时不屏蔽
+    - D. 训练时屏蔽后不缩放，推理时乘 (1−p)
+  answer: A
+  explanation: inverted dropout 训练时 y=x·mask/(1−p)：屏蔽 p 比例神经元并放大保留值，使输出期望不变；推理时 y=x 无需缩放（PyTorch 默认）。注意推理前必须 model.eval() 关闭屏蔽，否则预测不稳定。Dropout 强迫网络学分散特征，相当于 2ⁿ 个子网络集成，防过拟合；与权重衰减（L2 正则化，惩罚大权重）是常用正则化组合。
+  tags: [regularization, dropout]
+  week: week3-深度学习组件
+  project: none
+  stack: pretrain-sft
+  variants:
+    - 为什么推理前必须调用 model.eval()？不调用会怎样？
+    - 权重衰减（L2 正则化）和 Dropout 防过拟合的机制有何不同？
+    - Dropout 的 p 一般怎么设（Embedding 后 / 全连接层前）？
+- id: ml-007
+  difficulty: easy
+  type: boolean
+  question: 梯度下降中，学习率设置过大可能导致损失震荡甚至发散，设置过小则收敛极慢。
+  answer: true
+  explanation: 更新式 W←W−η·∇L，η 太大一步跨过头（震荡/发散），η 太小每步挪动极小（收敛慢）。课程 GradientDescent 实战（合理学习率）loss 47.75→0.0006 即为效果验证。实践中常用学习率调度：初期 warmup 小学习率线性增，后期阶梯衰减或余弦退火——开始大步探索、后期小步精调。
+  tags: [optimizer, learning-rate]
+  week: week2-深度学习基础
+  project: none
+  stack: pretrain-sft
+  variants:
+    - 学习率调度有哪些方式？warmup 的作用是什么？
+    - 训练时怎么判断当前学习率设置过大还是过小？
+- id: ml-008
+  difficulty: medium
+  type: boolean
+  question: LSTM 通过细胞状态 c 直接传播信息，彻底解决了 RNN 的梯度消失问题。
+  answer: false
+  explanation: LSTM 用遗忘门/输入门/输出门控制信息流动，细胞状态 cₜ=fₜ⊙cₜ₋₁+iₜ⊙c̃ₜ 直接传播、梯度通道顺畅，显著缓解（而不是彻底解决）梯度消失——课程笔记明确写"缓解梯度消失"。超长序列仍会梯度衰减，所以后续才用 Attention：任意两位置直接相连 + 残差连接保底梯度，才真正解决长距离依赖。
+  tags: [rnn, lstm, gradient]
+  week: week3-深度学习组件
+  project: none
+  stack: pretrain-sft
+  variants:
+    - LSTM 的三个门分别控制什么？细胞状态更新公式怎么写？
+    - 为什么 Attention 能解决 RNN 的长距离依赖问题？
+- id: ml-009
+  difficulty: medium
+  type: boolean
+  question: 如果不加任何激活函数，无论叠加多少层全连接层，整个网络仍然等价于一个线性变换。
+  answer: true
+  explanation: 多层线性层连乘 W₃(W₂(W₁x+b₁)+b₂)+b₃ 可以合并为单个线性变换 Wx+b，表达能力不变——多层线性=仍线性。激活函数（ReLU 等）引入非线性，深度才有意义；课程强调深度比宽度更重要，正是建立在非线性激活之上。
+  tags: [activation, mlp]
+  week: week2-深度学习基础
+  project: none
+  stack: transformer
+  variants:
+    - 为什么说"深度比宽度更重要"？
+    - 激活函数在神经网络中的根本作用是什么？
+- id: ml-010
+  difficulty: medium
+  type: open
+  question: 请用直觉解释反向传播（Backpropagation）的过程，并说明它和链式法则的关系。
+  points:
+    - 前向传播：输入逐层计算得到预测 ŷ，与真实 y 算出损失 L（损失函数给目标）
+    - 反向：从损失出发，用链式法则（dy/dx=f'(g(x))·g'(x)，局部梯度逐层相乘）从输出层往回计算每个权重对损失的偏导——梯度
+    - 梯度方向是损失上升最快的方向，负梯度方向下降最快
+    - 参数更新：W←W−η·∇L，由优化器完成
+    - 框架层面：PyTorch 自动微分代劳，训练循环 loss.backward() → optimizer.step()，且每轮先 zero_grad() 清空梯度
+  answer:
+    - 前向算出损失，反向用链式法则从输出层逐层计算每个权重的梯度
+    - 梯度指向损失上升最快的方向，沿负梯度方向更新参数
+  explanation: 反向传播=链式法则的工程化应用。面试强调三点：①逐层局部梯度相乘；②梯度的几何含义（上升最快方向，负梯度下降）；③框架帮你算梯度（zero_grad→backward→step 循环）。week1 手写梯度下降踩过学习率/符号的坑，week2 用 torch 自动微分即体会到"框架算梯度"的价值。
+  tags: [backprop, chain-rule]
+  week: week2-深度学习基础
+  project: none
+  stack: pretrain-sft
+  variants:
+    - 训练循环里为什么要 optimizer.zero_grad()？不清零会怎样？
+    - 手推一个两层网络某个权重的梯度计算过程。
+- id: ml-011
+  difficulty: hard
+  type: open
+  question: 对比 BatchNorm 和 LayerNorm 的归一化方式，并说明为什么 NLP/Transformer 首选 LayerNorm。
+  points:
+    - 归一化维度：BN 在 batch 方向按特征维归一化（依赖 batch 统计量）；LN 对每个样本在特征方向归一化（不依赖 batch）
+    - 序列长度不一/padding：NLP 变长序列 padding 多，BN 统计量被污染、不准
+    - batch 小：显存限制下 batch size 小，BN 统计不稳定；推理时 BN 用移动平均的全局统计量，变长序列下不好用
+    - LN 训练/推理一致，是 Transformer/BERT 的标准选择
+    - 加分项：现代大模型常用 RMSNorm（去掉均值中心化、只做缩放，更快更省）
+  answer:
+    - BN 按 batch 归一化、LN 按样本归一化
+    - 序列变长、batch 小、推理统计量三个原因
+  explanation: 先答定义对比（归一化维度），再答三个原因（变长/padding、batch 小、推理一致性），最后答出 RMSNorm 加分。归一化解决的是内部协变量偏移（各层输入分布漂移导致训练不稳定）。week3 实战手写 BN 与 torch 输出一致验证过。
+  tags: [normalization, batchnorm, layernorm]
+  week: week3-深度学习组件
+  project: none
+  stack: transformer
+  variants:
+    - 什么是内部协变量偏移（Internal Covariate Shift）？归一化如何缓解它？
+    - 图像任务里 BatchNorm 为什么效果好？
+- id: ml-012
+  difficulty: hard
+  type: open
+  question: 什么是梯度消失和梯度爆炸？为什么深度网络会出现？请至少列出三种缓解手段。
+  points:
+    - 定义：反向传播梯度逐层连乘，连乘结果 <1 时深层梯度趋近 0（消失），>1 时指数放大（爆炸）
+    - 原因：链式法则连乘 + 层数深；Sigmoid/Tanh 两端导数趋近 0（饱和区）加剧消失；RNN 长序列隐状态 tanh 反复传递尤其严重
+    - 缓解 1：激活函数换 ReLU（正区间导数恒为 1，梯度不衰减）
+    - 缓解 2：残差连接 y=x+f(x)，梯度有恒等通路保底（∂y/∂x=1+∂f/∂x），Transformer 靠它堆几十上百层
+    - 缓解 3：归一化（LayerNorm/BatchNorm）稳定各层输入分布，避免进入激活饱和区
+    - 其他可选：合理初始化、梯度裁剪、LSTM 细胞状态直接传播
+  answer:
+    - 梯度连乘趋 0 或爆炸，深度网络 + Sigmoid/Tanh 饱和加剧
+    - 缓解：ReLU、残差连接、LayerNorm/BN、梯度裁剪、LSTM
+  explanation: 从"梯度=链式连乘"切入，原因列 1-2 条、缓解列 2-3 条即可拿满分。残差连接和 LayerNorm 是 Transformer 两大保梯度机制，务必答出；RNN 场景可补 LSTM/Attention。
+  tags: [gradient, vanishing, residual]
+  week: week2-深度学习基础
+  project: none
+  stack: transformer
+  variants:
+    - 残差连接为什么能缓解梯度消失？写出梯度表达式。
+    - 梯度爆炸一般怎么处理？梯度裁剪的原理是什么？

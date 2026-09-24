@@ -1,0 +1,146 @@
+# Week15 Graph 与 LLM 题库（考核体系 V1）
+# 主题：GraphRAG 思路 / 图数据结构 / 图数据库与向量库差异 / 知识图谱构建 / 图在 RAG 中的应用
+# 来源：week15-KG与LLM.md 学习笔记（Graph×LLM + Graph Engineering）
+- id: grf-001
+  difficulty: easy
+  type: single
+  question: 知识图谱中最基本的知识表示单元「三元组」指的是什么？
+  options:
+    - A. (实体, 属性, 属性值)
+    - B. (主语, 谓语, 宾语)，如（李白, 创作, 静夜思）
+    - C. (头实体, 尾实体, 向量)
+    - D. (查询, 上下文, 答案)
+  answer: B
+  explanation: 三元组 (Subject, Predicate, Object) 是知识图谱的最小知识单元，主语和宾语是实体（节点），谓语是实体间的关系（边）。如（李白, 创作, 静夜思）。A 是属性三元组的一种变体，不是标准定义；C/D 不是知识表示单元。
+  tags: [graph, knowledge-graph, triple]
+  week: week15-graph和llm
+  project: none
+  stack: rag
+  variants:
+    - 三元组中的实体、关系和属性分别对应图结构中的什么？
+    - 如何用三元组表示「某公司的子公司」这类关系？
+- id: grf-002
+  difficulty: medium
+  type: single
+  question: 相比纯向量检索 RAG，知识图谱/GraphRAG 最核心的增量优势是什么？
+  options:
+    - A. 构建成本更低、索引速度更快
+    - B. 支持多跳关系推理，且答案路径可溯源、可解释
+    - C. 能处理超长上下文，不再需要分块
+    - D. 完全消除 LLM 幻觉
+  answer: B
+  explanation: KG 补齐 LLM 的两大短板：幻觉（无溯源）+ 结构推理弱（多跳/关系链不稳）。图结构天然支持沿关系链做多跳推理，且每条答案都有实体/路径可回溯，可解释性高。向量 RAG 做语义相似召回，单跳事实强但多跳弱。A 相反（GraphRAG 成本更高）；D 夸大了能力，只能缓解幻觉（如幻觉核验）。
+  tags: [graphrag, rag, multi-hop]
+  week: week15-graph和llm
+  project: none
+  stack: rag
+  variants:
+    - 什么类型的查询适合走图而不是向量检索？
+    - KG 如何帮助缓解 LLM 的幻觉问题？
+- id: grf-003
+  difficulty: medium
+  type: single
+  question: 关于图数据库（如 Neo4j）与向量数据库的本质区别，下列说法正确的是？
+  options:
+    - A. 两者都能高效做语义相似度召回，只是存储格式不同
+    - B. 图数据库擅长按关系遍历、多跳查询；向量数据库擅长语义相似度检索
+    - C. 向量数据库基于 Cypher 查询语言，图数据库基于 ANN 索引
+    - D. 图数据库只能存关系，不能存实体属性
+  answer: B
+  explanation: 图数据库以节点/边/属性组织数据，针对关系遍历和多跳查询优化（Cypher 查询）；向量数据库以向量 + ANN（近似最近邻）索引为核心，擅长语义相似度召回。两者是互补的：向量负责语义入口找相关，图负责多跳精确推理，不是同一种东西的两种格式。A/C/D 都混淆了两者。
+  tags: [graph, neo4j, vector-db, database]
+  week: week15-graph和llm
+  project: none
+  stack: rag
+  variants:
+    - 在实际 RAG 系统中，图数据库和向量数据库如何协同工作？
+    - 什么场景下只靠向量库不够，需要引入图数据库？
+- id: grf-004
+  difficulty: medium
+  type: single
+  question: GraphRAG 的 Local Search 与 Global Search 两种在线查询模式，分别适合什么类型的问题？
+  options:
+    - A. Local 适合全局主题总结，Global 适合具体实体查询
+    - B. Local 适合具体实体查询（如「张三和李四在哪些项目合作？」），Global 适合全局主题查询（如「这批论文的核心主题是什么？」）
+    - C. 两者都只做向量召回，只是排序方式不同
+    - D. Local 走社区摘要 Map-Reduce，Global 走实体链接 + 邻居扩展
+  answer: B
+  explanation: Local Search：实体链接 → k 跳邻居扩展 → 子图提取 → LLM 合成，针对具体实体/关系问答；Global Search：社区摘要分发 → Map 并行生成局部答案 → Reduce 聚合 → LLM 合成，针对跨社区的全局主题总结。A 说反了，C 错（都不做向量召回，走图谱），D 把两种模式的手段对调了。
+  tags: [graphrag, local-search, global-search]
+  week: week15-graph和llm
+  project: none
+  stack: rag
+  variants:
+    - Global Search 的 Map-Reduce 流程中，Map 和 Reduce 各负责什么？
+    - 社区摘要为什么只适合全局主题问题而不适合具体实体问题？
+- id: grf-005
+  difficulty: easy
+  type: boolean
+  question: GraphRAG 的离线索引成本通常比向量 RAG 高 5-10 倍（因为要调用 LLM 做实体/关系抽取），但能显著提升全局主题问答的准确率（实测约 +30%）。
+  answer: true
+  explanation: 离线索引阶段 GraphRAG 要对每个文档分块调用 LLM 抽取实体和关系、建图、做 Leiden 社区检测并生成社区摘要，LLM 调用量大，成本是向量 RAG 的 5-10x；但换来全局主题问答准确率提升 30%+。值得为全局主题分析投资，所以选型要看查询类型。
+  tags: [graphrag, index, cost]
+  week: week15-graph和llm
+  project: none
+  stack: rag
+  variants:
+    - 既然索引成本高，什么场景下才值得用 GraphRAG？
+    - 有哪些降低 GraphRAG 索引成本的手段？
+- id: grf-006
+  difficulty: medium
+  type: boolean
+  question: 在 Graph Engineering（多 Agent 拓扑设计）中，应该让 LLM 自由决定路由和边（即「模型定边、代码定节点内」）。
+  answer: false
+  explanation: 正确原则是「代码定边、模型定节点内」——路由和拓扑边用确定性 Python 保证可控可审计，LLM 只在节点内部做决策（如是否派发、如何综合）。顺序任务用图反而降性能（SWE-bench 降 1.2-12.8%）；便宜模型做路由、贵模型做推理是落地要点。
+  tags: [graph-engineering, agent, orchestration]
+  week: week15-graph和llm
+  project: none
+  stack: agent
+  variants:
+    - Orchestrator-Workers 和 Pipeline+门 两种拓扑各适合什么场景？
+    - 为什么路由用确定性代码而不是让 LLM 决定更可控？
+- id: grf-007
+  difficulty: medium
+  type: open
+  question: 请描述 GraphRAG 的离线索引（构建）流程，从原始文档到可检索的图，并说明每步的作用。
+  points:
+    - 原始文档切块（400-600 token），为抽取做准备
+    - 调用 LLM 做实体/关系抽取（Prompt 驱动三元组抽取，Few-shot 零标注）
+    - 基于三元组构建图谱（实体规范化，节点/边/属性入库，如 Neo4j）
+    - Leiden 社区检测（分层聚类，把图拆成社区，按公司/主题边界聚合）
+    - 为每个社区生成摘要（作为 Global Search 的检索单元，离线快照）
+    - 说明成本高（LLM 调用量大，约向量 RAG 的 5-10x）与收益（全局问答 +30%）
+  answer:
+    - 分块 → LLM 抽取实体关系 → 建图 → 社区检测 → 社区摘要
+    - 离线一次性构建，在线查询直接读图
+  explanation: 五步管线。要点：LLM 抽取是成本大头、Leiden 分社区、社区摘要是离线快照（数据变更后必须联动刷新，否则 Global 检索会"无相关"）。
+  tags: [graphrag, knowledge-graph, pipeline, index]
+  week: week15-graph和llm
+  project: none
+  stack: rag
+  variants:
+    - 社区摘要是离线快照，数据更新后不刷新会出什么问题？
+    - 实体抽取环节如何做实体规范化，避免同一实体建出多个节点？
+- id: grf-008
+  difficulty: hard
+  type: open
+  question: 对比「知识图谱/GraphRAG」「向量 RAG」「长上下文 LLM」三种范式（至少从多跳推理、可解释性、构建成本三维度），并说明主流混合架构如何组织，以及什么查询类型走哪条路。
+  points:
+    - 多跳推理：图强（图路径）、向量弱（相似召回）、长上下文中等（依赖 CoT）
+    - 可解释性：图高（路径可溯）、向量低、长上下文低
+    - 构建成本：图高、向量低、长上下文极低
+    - 混合架构三层协同：向量召回（语义入口）→ 图谱推理（多跳精确）→ LLM 生成（自然语言输出）
+    - 查询路由：简单单跳走向量、多跳/可审计走图；选型信号（医疗/金融风控/法律合规走图）
+    - 可提 NL2Cypher 作为轻量替代（直接查图）或幻觉核验（声明转三元组查 KG）
+  answer:
+    - 三维度对比表（多跳/可解释/成本）
+    - 混合三层：向量召回 → 图推理 → LLM 生成
+    - 按查询类型路由
+  explanation: 核心是"不是越复杂越好"：多跳/关系密集/可审计场景走图，单跳/快速上线走向量，单文档深析走长上下文。混合架构是主流，查询路由决定每类问题走哪条路。答出三维对比 + 路由原则即得高分。
+  tags: [graphrag, rag, architecture, selection]
+  week: week15-graph和llm
+  project: none
+  stack: rag
+  variants:
+    - 金融风控 / 法律合规场景为什么更适合图而不是纯向量检索？
+    - NL2Cypher 和 GraphRAG 有什么区别？什么时候用 NL2Cypher 更合适？
