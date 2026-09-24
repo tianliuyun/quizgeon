@@ -35,6 +35,10 @@
     if (!banks['llm-interview']) {
       $('config-info').textContent = '⚠️ 未找到 llm-interview 题库，请先运行 build 脚本生成 questions.js';
     }
+    // 默认选中「大模型面试」题库
+    if (banks['llm-interview']) {
+      sel.value = 'llm-interview';
+    }
     updateConfigInfo();
   }
 
@@ -113,6 +117,9 @@
     $('judge-result').innerHTML = '';
     state.selectedOpt = null;
 
+    renderAnswerCard();
+    renderTags(q);
+
     const optBox = $('q-options');
     const openBox = $('q-open');
     optBox.innerHTML = '';
@@ -160,6 +167,50 @@
 
   function typeName(t) {
     return { single: '单选', multiple: '多选', boolean: '判断', open: '简答', fill: '填空' }[t] || t;
+  }
+
+  // ---------- 答题卡 ----------
+  function renderAnswerCard() {
+    const box = $('answer-card');
+    const grid = document.createElement('div');
+    grid.className = 'card-grid';
+    const typeMark = { single: '单', multiple: '多', boolean: '判', open: '简' };
+    state.questions.forEach((q, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'card-cell';
+      cell.textContent = String(i + 1);
+      const mk = document.createElement('span');
+      mk.className = 'type-mark';
+      mk.textContent = typeMark[q.type] || '?';
+      cell.appendChild(mk);
+      if (i === state.idx) cell.classList.add('current');
+      const res = state.results[i];
+      if (res) {
+        if (res.ok === 1) cell.classList.add('done-correct');
+        else if (res.userAnswer === '(跳过)') cell.classList.add('skipped');
+        else cell.classList.add('done-wrong');
+      }
+      cell.addEventListener('click', () => jumpTo(i));
+      grid.appendChild(cell);
+    });
+    box.innerHTML = '';
+    box.appendChild(grid);
+  }
+
+  function jumpTo(i) {
+    if (i < 0 || i >= state.questions.length) return;
+    state.idx = i;
+    renderQuestion();
+  }
+
+  // ---------- 标签展示 ----------
+  function renderTags(q) {
+    const box = $('q-tags');
+    let html = '';
+    if (q.week) html += `<span class="tag-badge tag-week">📅 ${q.week}</span>`;
+    if (q.project && q.project !== 'none') html += `<span class="tag-badge tag-project">📦 ${q.project}</span>`;
+    if (q.stack) html += `<span class="tag-badge tag-stack">⚙️ ${q.stack}</span>`;
+    box.innerHTML = html;
   }
 
   // ---------- 提交 ----------
@@ -281,6 +332,22 @@
     $('r-weak').innerHTML = weakTags.length
       ? weakTags.map(([t, c]) => `<span class="tag">${t} ×${c}</span>`).join('')
       : '无（本次全对 🎉）';
+
+    // 按三类标签聚合薄弱点
+    const agg = (field, label) => {
+      const m = {};
+      wrong.forEach((r) => {
+        const v = r.q[field];
+        if (v && v !== 'none') m[v] = (m[v] || 0) + 1;
+      });
+      const arr = Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      $('r-weak-' + label).innerHTML = arr.length
+        ? arr.map(([v, c]) => `<span class="tag">${v} ×${c}</span>`).join('')
+        : '—';
+    };
+    agg('week', 'week');
+    agg('project', 'project');
+    agg('stack', 'stack');
 
     // 错题回顾
     const wrongBox = $('r-wrong');

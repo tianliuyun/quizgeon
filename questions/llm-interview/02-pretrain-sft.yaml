@@ -13,6 +13,9 @@
   answer: B
   explanation: 预训练用海量互联网文本（万亿 token）学语言和世界知识；SFT 用几万~几十万条指令数据学按指令回答；对齐用人类偏好数据让输出符合有用/无害/诚实。口诀：预训练给知识，SFT 给格式，对齐给价值观。数据量递减、主观度递增，顺序不能乱。
   tags: [pretrain, sft, rlhf, pipeline]
+  week: week5-大语言模型初探
+  project: none
+  stack: pretrain-sft
   variants:
     - 每个阶段分别用什么数据、训练目标是什么？
     - Base Model / SFT Model / Chat Model 分别对应哪个阶段？
@@ -28,6 +31,9 @@
   answer: B
   explanation: 对话数据形如 <|user|>问题<|assistant|>回答，把 user 部分 labels 设为 -100，交叉熵自动忽略、不计算 loss。目的是让模型只学会如何回答问题，而不是背熟用户的问题。这就是 Label Mask 技巧。
   tags: [sft, label-mask]
+  week: week5-大语言模型初探
+  project: none
+  stack: pretrain-sft
   variants:
     - -100 在交叉熵计算里具体是怎么起作用的？
     - 如果 user 部分也算 loss，模型会学到什么不好的东西？
@@ -43,6 +49,9 @@
   answer: B
   explanation: B 初始化为 0 则 ΔW = A×B = 0，初始输出与冻结的原模型完全一致，微调从原模型已有能力出发，训练稳定。如果 A、B 都随机初始化，一开始就扰动输出，容易破坏模型已学到的能力。
   tags: [lora, finetune]
+  week: week5-大语言模型初探
+  project: none
+  stack: pretrain-sft
   variants:
     - 推理时为什么可以把 A×B 合并回 W，实现零额外延迟？
     - 如果 A、B 都随机初始化会有什么问题？
@@ -58,6 +67,9 @@
   answer: B
   explanation: Actor（生成回答）和 Critic（估计 V(s)、算 Advantage）在训练中更新；Reward Model 冻结，负责给回答打分；Reference Model 冻结，负责算 KL 散度防止模型漂移。口诀：演员+评委+老师+标杆，2 个训练、2 个冻结。
   tags: [rlhf, ppo]
+  week: week17-强化学习
+  project: none
+  stack: rl
   variants:
     - Reference Model 的作用是什么？为什么需要它？
     - 奖励公式 reward = r − β·KL 里 KL 惩罚项的意义是什么？
@@ -73,6 +85,9 @@
   answer: B
   explanation: PPO 是显式 RL 循环：SFT → 训练 RM → PPO 更新策略，4 个模型、需精细调参，表达能力强制可在线探索，适合通用对话对齐。DPO 跳过 RM 和 PPO，直接在偏好对（好回答 vs 坏回答）上做监督学习，拉大相对概率差，简单稳定，但受限于离线数据、表达能力弱。
   tags: [dpo, ppo, alignment]
+  week: week17-强化学习
+  project: none
+  stack: rl
   variants:
     - DPO 的损失函数在做什么？为什么能跳过奖励模型？
     - 什么场景选 PPO，什么场景选 DPO？
@@ -83,6 +98,9 @@
   answer: true
   explanation: BERT 双向注意力，预训练任务为 MLM（掩码语言模型）+ NSP，擅长理解类任务（分类、匹配、NER），微调方式是加分类头；GPT 单向因果掩码，预训练任务为 CLM（因果语言模型），擅长生成类任务（对话、写作），微调方式是 SFT/RLHF。理解类任务选 BERT 又快又准，生成类任务只能选 GPT 系。
   tags: [bert, gpt, architecture]
+  week: week4-语言模型
+  project: none
+  stack: nlp
   variants:
     - 理解类任务和生成类任务分别选什么架构？选型原则是什么？
     - 为什么现在大模型趋向 Decoder-only 大一统？
@@ -93,6 +111,9 @@
   answer: false
   explanation: 预训练目标 = 预测下一个 token，学到的是「互联网上的人怎么说」，不代表「助手应该怎么说」；对齐（RLHF/DPO/GRPO）用人类偏好把模型拉向有用/无害/诚实。两者目标不同，这正是对齐阶段存在的原因——如果目标相同就不需要对齐了。
   tags: [pretrain, alignment]
+  week: week17-强化学习
+  project: none
+  stack: rl
   variants:
     - 为什么纯预训练的 Base Model 不适合直接当助手？
     - 对齐税是什么？为什么 RLHF 后某些能力会轻微退化？
@@ -103,6 +124,9 @@
   answer: true
   explanation: 训练时 W 冻结，只更新 A、B（可训练参数通常 0.1%~1%），优化器状态也只给 LoRA 参数，所以省显存。推理时预先算好 W' = W + A×B 合并后的权重，参数量与全量模型一样，无额外计算延迟；而且一个基座可以挂多个 LoRA 适配器，切换场景只换适配器。
   tags: [lora, inference]
+  week: week5-大语言模型初探
+  project: none
+  stack: pretrain-sft
   variants:
     - LoRA 省显存的核心原因是什么？
     - 可训练参数大约占多少比例（r=8 时）？
@@ -122,6 +146,9 @@
     - 每阶段产出（Base/SFT/Chat Model）
   explanation: 按「数据准备 → 预训练 → SFT → 对齐」顺序答出每阶段「数据量 + 训练目标 + 产出」三个要素即可，用口诀「预训练给知识、SFT 给格式、对齐给价值观」总结得满分。
   tags: [pretrain, sft, alignment, pipeline]
+  week: week5-大语言模型初探
+  project: none
+  stack: pretrain-sft
   variants:
     - 为什么 Base Model 不能直接当助手用？
     - 如果跳过 SFT 直接做 RLHF 会怎样？（R1-Zero 的启示）
@@ -141,6 +168,9 @@
     - 各自的优缺点与适用场景
   explanation: 三种方法各答出「原理一句话 + 关键机制 + 适用场景」：PPO 答出四模型和 KL 惩罚，DPO 答出隐式奖励、跳过 RL 循环，GRPO 答出组内相对优势、去掉 Critic，即得满分。
   tags: [rlhf, ppo, dpo, grpo, alignment]
+  week: week17-强化学习
+  project: none
+  stack: rl
   variants:
     - 为什么 GRPO 不需要 Critic？能省多少显存？
     - 数学/代码场景选哪种对齐方法，开放对话场景选哪种？
@@ -160,6 +190,9 @@
     - r/alpha 的选择方法与经验
   explanation: 原理（冻结 W + 低秩 A×B）、有效性（低秩假设）、参数选择（r 从 8 起、alpha=2r、过拟合减 r）、优势（参数占比/显存/多适配器/推理合并）四块答齐得满分。
   tags: [lora, finetune, parameter-efficient]
+  week: week5-大语言模型初探
+  project: none
+  stack: pretrain-sft
   variants:
     - LoRA 和全量微调各自优劣？长训练、大数据量时谁的上限更高？
     - 一个基座挂多个 LoRA 适配器的应用场景是什么？

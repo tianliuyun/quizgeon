@@ -13,6 +13,9 @@
   answer: B
   explanation: 自注意力公式 Attention(Q,K,V)=softmax(QKᵀ/√dₖ)·V。除以 √dₖ 是缩放因子，防止点积过大导致 softmax 饱和进入梯度平缓区。
   tags: [transformer, attention]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - 缩放因子 √dₖ 的作用是什么？不缩放会怎样？
     - 为什么用 QKᵀ 而不是 QVᵀ 计算注意力分数？
@@ -28,6 +31,9 @@
   answer: B
   explanation: 多头让模型在不同表示子空间同时关注不同类型依赖（句法/指代/远距离）。多头不增加总参数量（d_model 拆成 h 头，每头 d_k=d_model/h）。
   tags: [transformer, multi-head]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - 多头注意力为什么不增加总参数量？
     - 如果只用单头注意力，模型会损失什么能力？
@@ -43,6 +49,9 @@
   answer: B
   explanation: BN 在同一 batch 的同一特征维度归一化，受 batch 大小和序列 padding 影响；LN 对每个样本所有特征维度归一化，不依赖 batch 和序列长度。三个原因：序列长度不一/padding、batch 小统计不稳、推理时全局统计量不好用。
   tags: [transformer, normalization]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - 现代大模型常用 RMSNorm，它和 LayerNorm 有什么区别？
     - 如果 batch size 很大且序列等长，BN 是否可行？
@@ -58,6 +67,9 @@
   answer: C
   explanation: QKᵀ 计算是 O(n²·d)，n 是序列长度。所以长序列下注意力是瓶颈，引出稀疏注意力、线性注意力、FlashAttention 等优化。
   tags: [transformer, complexity]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - 长序列场景下，有哪些降低注意力复杂度的方法？
     - FlashAttention 为什么能省显存？
@@ -73,6 +85,9 @@
   answer: B
   explanation: 残差连接让梯度通过恒等路径直接回传；注意力让任意两位置直接相连，梯度一跳就到，不存在长距离衰减。RNN 梯度连乘消失，Transformer 靠这两点取代 RNN。
   tags: [transformer, gradient]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - RNN/LSTM 为什么会有梯度消失？LSTM 缓解了但没有根治的原因？
     - 残差连接在 Transformer 中具体加在哪里？
@@ -83,6 +98,9 @@
   answer: true
   explanation: 自注意力对输入集合做加权，不含顺序信息，交换两个 token 位置输出不变（若键值对也交换）。必须加位置编码（绝对/相对/RoPE/ALiBi）注入位置信息。
   tags: [transformer, position-encoding]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - 相对位置编码和绝对位置编码的区别？
     - RoPE（旋转位置编码）为什么被大模型广泛采用？
@@ -93,6 +111,9 @@
   answer: true
   explanation: Decoder-only 生成时不能看到未来 token，用上三角掩码（-inf）实现因果性。这是 GPT 系列与 BERT（双向）的核心区别。
   tags: [transformer, decoder]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - Encoder-only 和 Decoder-only 在注意力上的本质区别是什么？
     - 为什么现代大模型趋向 Decoder-only 大一统？
@@ -111,6 +132,9 @@
     - QKᵀ 缩放、softmax、加权 V
   explanation: 四步：投影→打分→归一化→加权聚合。注意要讲清"为什么除以 √dₖ"和"为什么 softmax"。
   tags: [transformer, attention]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - 如果 dₖ 很大，不缩放会出什么问题？
     - 注意力权重矩阵可视化的意义是什么？
@@ -129,6 +153,9 @@
     - 序列长度不一、batch 小、推理变长三个原因
   explanation: 三点核心 + RMSNorm 加分项。答出定义对比 + 至少三个原因得满分。
   tags: [transformer, normalization]
+  week: week5-大语言模型初探
+  project: none
+  stack: transformer
   variants:
     - 什么场景下 BatchNorm 反而更合适？
 - id: trans-010
@@ -143,6 +170,9 @@
   answer: B
   explanation: 生成第 n 个 token 时，前 n-1 个 token 的 K/V 已算过，缓存复用，不用每次重算全部。Decode 阶段每次只算最新 token 的 KV。
   tags: [inference, kv-cache]
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   variants:
     - Prefill 和 Decode 阶段分别的瓶颈是什么？
     - KV Cache 的显存占用和什么成正比？
@@ -158,6 +188,9 @@
   answer: B
   explanation: 借鉴操作系统虚拟内存管理：KV Cache 分页 + 页表映射，物理页不连续、按需分配，消除显存碎片和 padding 浪费，显存利用率 40-60%→90%+，配合 continuous batching 吞吐提升 2-4 倍。这是 vLLM 的核心。
   tags: [inference, vllm]
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   variants:
     - 传统 KV Cache 的显存碎片问题是怎么产生的？
     - Continuous batching 和 PagedAttention 如何配合？

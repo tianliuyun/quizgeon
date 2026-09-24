@@ -13,6 +13,9 @@
   answer: A
   explanation: 混合检索 = 向量检索管语义 + BM25 管关键词精确匹配，互补召回后再用 RRF 融合。向量管语义泛化，BM25 管专有名词/型号的精确匹配。
   tags: [rag, hybrid-search]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - 向量检索和 BM25 各自擅长什么场景？
     - RRF 融合是怎么工作的，为什么不需要调权重？
@@ -28,6 +31,9 @@
   answer: C
   explanation: 知识类问题首选 RAG：加文档即更新、可引用溯源、幻觉相对可控、不需要训练数据。微调适合风格/能力/格式对齐类问题；知识更新要重新训练且无法溯源。
   tags: [rag, finetune, 选型]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - RAG 和微调各自的适用场景是什么？
     - 什么情况下 RAG 和微调结合效果最好？
@@ -43,6 +49,9 @@
   answer: B
   explanation: 向量检索是"双塔"（query 和 doc 分别编码再算余弦相似度），交互少所以快；重排是"单塔"CrossEncoder，query+doc 一起输入充分交互，更准但慢，所以只能对粗排 Top50-100 精排到 Top3-5。经典组合可提升准确率 20%+。
   tags: [rag, rerank, cross-encoder]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - 为什么重排模型不能直接用来做检索？
     - 经典的两阶段检索流程（粗排 + 精排）是怎样的？
@@ -58,6 +67,9 @@
   answer: B
   explanation: Function Calling 定义"模型怎么说要调用工具"（协议层，OpenAI 先做）；MCP 定义"工具怎么提供给模型"（更上层的工具生态协议，JSON-RPC/stdio，Anthropic 提出）。类比：FC 是"电"，MCP 是"插座标准"。
   tags: [agent, function-calling, mcp]
+  week: week11-工具调用
+  project: none
+  stack: agent
   variants:
     - 没有 Function Calling，MCP 还能工作吗？
     - MCP 给工具接入带来了什么好处（一次接入到处可用）？
@@ -73,6 +85,9 @@
   answer: B
   explanation: 约束解码在采样时做语法约束：根据已生成内容的解析状态，实时计算"下一个 token 可以是哪些"，把不合法的概率置为 -inf。Schema 通过率从 60-80% 提升到 100%，推理速度影响 <5%，vLLM / llama.cpp 都支持。
   tags: [agent, guided-json, 约束解码]
+  week: week11-工具调用
+  project: none
+  stack: agent
   variants:
     - 约束解码对推理速度影响大吗？
     - 哪些场景适合用约束解码？
@@ -88,6 +103,9 @@
   answer: B
   explanation: 父子块兼顾检索精度和上下文完整：小块命中精准，返回大块给 LLM 保证生成上下文完整，是生产级推荐；固定分块简单但语义可能被切断，准确率比语义/父子块低 15%+。
   tags: [rag, chunking]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - 固定大小分块有什么缺点？
     - 文档结构清晰时，语义分块和固定分块怎么选？
@@ -98,6 +116,9 @@
   answer: true
   explanation: 这是幻觉控制三件套之一（低置信度主动拒绝）：重排分数低于阈值就不硬答，避免模型基于不相关内容编造答案。
   tags: [rag, hallucination]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - 幻觉控制的三件套具体是哪三件？
     - 除了三件套，还有哪些进阶的幻觉控制手段？
@@ -108,6 +129,9 @@
   answer: false
   explanation: 向量检索擅长语义匹配，但对专有名词/精确术语/产品型号的字符串匹配不如 BM25。BM25 能精确匹配"EDS v3.8.2"，纯向量可能召回语义相近但型号不对的内容——这正是要用混合检索的原因。
   tags: [rag, hybrid-search, bm25]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - 举一个向量检索会翻车、BM25 更准的查询例子？
     - 混合检索的结果是怎么融合排序的？
@@ -118,6 +142,9 @@
   answer: false
   explanation: 最大步数是防死循环最兜底的硬限制，必须有。此外还要配合重复 Action 检测（同样工具同样参数连续调用则打断）、Observation 质量监控（无新信息时提示换方法）、反思机制（多步无进展时停下反思）。
   tags: [agent, react, 死循环]
+  week: week12-AGENT
+  project: none
+  stack: agent
   variants:
     - Agent 循环的终止条件有哪些？
     - 检测到 Agent 死循环时，有哪些处理手段？
@@ -135,6 +162,9 @@
     - 在线：查询改写 → 混合检索 → RRF → 重排 → 组装上下文 → LLM 生成
   explanation: 两阶段缺一不可：离线建好索引，在线才能检索。重点考察分块、混合检索、重排的作用，能补上幻觉控制和评估体系说明才是真懂生产落地。
   tags: [rag, 全流程]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - 分块大小对检索效果有什么影响？
     - 怎么评估一个 RAG 系统的效果（三层评估体系）？
@@ -154,6 +184,9 @@
     - 用 RRF 融合，是生产级标配
   explanation: 核心是讲清"互补"：向量解决"意思相近"，BM25 解决"字符串完全一致"。能举出型号/专有名词的例子（如 EDS v3.8.2）加分。
   tags: [rag, hybrid-search]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - RRF 融合和加权分数融合（如 0.5×向量 + 0.5×BM25）相比有什么优势？
     - 什么场景下纯向量检索就够用？
@@ -173,6 +206,9 @@
     - 低置信度主动拒绝
   explanation: 三层是 Prompt 约束 → 引用溯源 → 主动拒绝，层层兜底。能补进阶手段（CoT/Self-check）和量化指标（Faithfulness）说明有落地经验。
   tags: [rag, hallucination]
+  week: week10-检索增强生成
+  project: none
+  stack: rag
   variants:
     - 为什么"引用溯源"本身就能降低幻觉？
     - Faithfulness 指标衡量的是什么？怎么评估？
@@ -191,6 +227,9 @@
     - 直到 Final Answer 或触发终止条件
   explanation: 核心是讲清循环结构和"为什么有效"（外部信息 + 可审计）。终止条件是工程落地的关键，能答出最大步数硬限制和防死循环手段得满分。
   tags: [agent, react]
+  week: week12-AGENT
+  project: none
+  stack: agent
   variants:
     - ReAct 和"一次性直接给答案"相比，优势是什么？
     - 工具调用失败了，ReAct 循环应该怎么处理？
@@ -206,6 +245,9 @@
   answer: D
   explanation: 四层记忆：工作记忆（当前对话，短期临时）、短期记忆（SQLite，最近几轮）、长期记忆（Markdown，重要知识/偏好）、语义记忆（向量库+全文检索，模糊语义召回）。核心机制还有 Memory Flush（对话结束把工作记忆里的重要信息写入长期记忆）和 Compaction（条目 >50 自动合并精简，防止无限膨胀）。
   tags: [agent, memory]
+  week: week12-AGENT
+  project: none
+  stack: agent
   variants:
     - Memory Flush 和 Compaction 分别解决什么问题？
     - 四层记忆分别用什么存储？为什么这么分层？

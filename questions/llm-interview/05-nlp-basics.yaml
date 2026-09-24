@@ -1,0 +1,225 @@
+# NLP 基础题库（week6-8：文本分类 / 序列标注 / 文本匹配）
+# 题型：single（单选）/ boolean（判断）/ open（简答，得分点判分）
+# 来源：week6-8 学习笔记 + 高频面试题30道-自答版（BERT vs GPT、LoRA、重排相关）
+- id: nlp-001
+  difficulty: easy
+  type: single
+  question: BERT 微调做文本分类时，最简单也最常用的句子向量提取方式是？
+  options:
+    - A. 取 CLS 位置的隐藏向量（last_hidden[:, 0, :]）
+    - B. 对全部 token 隐藏向量做不加权平均（含 PAD）
+    - C. 随机采样一个 token 的隐藏向量
+    - D. 用 Word2Vec 对整句求均值
+  answer: A
+  explanation: "CLS 向量最简单最常用，但依赖 NSP 预训练——RoBERTa 去掉 NSP 后 CLS 效果变弱。此时应改用 mean pooling（排除 PAD 的 mask 加权平均），长文本/语义相似度任务也首选 mean pooling；max pooling 需把 padding 置 -inf 再取 max，保留最显著特征。"
+  tags: [nlp, text-classification, bert, pooling]
+  week: week6-文本分类
+  project: none
+  stack: nlp
+  variants:
+    - 为什么 RoBERTa 上 CLS 向量效果变弱？这时该用什么池化？
+    - mean pooling 和 max pooling 分别怎么处理 PAD token？
+    - 单标签和多标签文本分类在输出层与损失函数上有什么不同？
+- id: nlp-002
+  difficulty: medium
+  type: single
+  question: 在 TNEWS 新闻分类项目三路对比（BERT 微调 53K 条 / Qwen2-0.5B Zero-shot / LoRA SFT 5K 条）中，哪项实测结论正确？
+  options:
+    - A. Zero-shot 准确率最高，且输出格式稳定无需解析
+    - B. LoRA SFT 仅用 BERT 1/10 的数据就达到同等准确率，并把无法解析率从 29% 压到 1%
+    - C. BERT 微调需要标注量最少，标注不足时首选
+    - D. LoRA 微调的可训练参数占全量参数的 20% 左右
+  answer: B
+  explanation: "实测：BERT 微调 val_acc 0.56 / macro-F1 0.55、无法解析 0%；Zero-shot 0.36、无法解析 29%（58/200，输出格式极不稳定）；LoRA SFT（5K 条）0.58、无法解析 1%。SFT 靠 Loss 掩码学会输出格式，是「格式学习」的胜利。D 错：LoRA r=8/alpha=16 可训练参数仅 1.08M/495M ≈ 0.22%。"
+  tags: [nlp, text-classification, lora, sft, zero-shot]
+  week: week6-文本分类
+  project: none
+  stack: nlp
+  variants:
+    - 为什么小模型 Zero-shot 分类不可靠？如何缓解（换 7B/API 模型、加解析兜底）？
+    - LoRA 可训练参数占比约多少？为什么能大幅省显存？
+    - SFT 的 Loss 掩码（prompt 部分 label=-100）起什么作用？
+- id: nlp-003
+  difficulty: medium
+  type: boolean
+  question: LLM SFT 训练文本分类时，通常对 prompt/指令部分设置 label=-100 做 Loss 掩码，只在 output 部分计算损失。
+  answer: true
+  explanation: SFT 的目标是让模型学会「回答格式与标签输出」，prompt 部分无需学习，label=-100 在交叉熵计算时被忽略。这正是 SFT 能把无法解析率从 29% 压到 1% 的关键机制之一。同时标签用自然语言（正面/负面）而非整数索引，与推理时 Prompt 对齐。
+  tags: [nlp, text-classification, sft, loss-mask]
+  week: week6-文本分类
+  project: none
+  stack: nlp
+  variants:
+    - 不做 Loss 掩码直接全序列算损失会怎样？
+    - 训练时标签为什么用自然语言而不是整数索引？
+    - 多标签分类应该用 Softmax 还是 Sigmoid + BCEWithLogitsLoss？
+- id: nlp-004
+  difficulty: hard
+  type: open
+  question: 对比 BERT 全量微调、LLM Zero-shot、LoRA SFT 三种文本分类方案（数据需求、效果、成本、适用场景），并给出选型建议。
+  points:
+    - BERT 微调：需数百~几万条标注；延迟低（<100ms）、成本低、判别式稳定（无法解析 0%）；全量微调几乎总是优于冻结微调
+    - Zero-shot：零标注分钟级上线，但小模型格式不稳（实测无法解析 29%）、延迟高成本高；适合无标注快速验证、类别常变场景
+    - LoRA SFT：千条数据 + 单卡即可，可训练参数仅 0.22%，避免灾难性遗忘，推理时 W'=W+BA 合并无额外开销；5K 条 SFT 达 0.58，超过 BERT 53K 条的 0.56
+    - 选型决策树：标注 ≥500 条/类 + 延迟 <100ms → BERT 全量微调；<100 条/类或类别频繁新增 → 大模型 Few-shot；Agent 路由/高频调用（QPS>100）→ 轻量分类模型；无标注快速验证 → Zero-shot 后收集标注
+  answer:
+    - 三方案的数据需求、效果、成本差异
+    - 实测数字：SFT 5K 条 0.58 vs BERT 53K 条 0.56，无法解析率 29%→1%
+    - 按场景给出选型建议
+  explanation: 核心认知是「SFT 的威力在格式学习」与「小模型零样本不可靠」：LLM 分类必须配解析兜底或 SFT；LoRA 用 0.22% 可训练参数拿到数据效率优势。回答时最好带上真实数字，体现做过三路对比。
+  tags: [nlp, text-classification, lora, sft, model-selection]
+  week: week6-文本分类
+  project: none
+  stack: nlp
+  variants:
+    - Agent 场景的分类路由（意图分发/Query 路由）为什么用轻量分类模型而不用大模型判断？
+    - 类别频繁新增时，有什么替代重新训练分类模型的方案？
+    - 全量 SFT 和 LoRA SFT 怎么选？各自代价是什么？
+- id: nlp-005
+  difficulty: easy
+  type: single
+  question: 用 per-token 独立 Softmax 预测 NER 标签，主要问题是什么？
+  options:
+    - A. 训练速度太慢，无法收敛
+    - B. 会预测出非法的标签序列（如 B-PER 后接 I-LOC、I-X 出现在开头）
+    - C. 无法处理中文文本
+    - D. 参数过多导致严重过拟合
+  answer: B
+  explanation: 独立预测忽略标签间依赖，会破坏 BIO 约束：I-X 不能出现在开头、I-X 前不能接不同类型的 B-Y、不能接 O。CRF 通过可学习的转移矩阵 T(num_tags, num_tags) 自动学会「非法转移 = 极大负数」，再配合维特比解码输出全局合法的序列。
+  tags: [nlp, ner, crf, bio]
+  week: week7-序列标注
+  project: none
+  stack: nlp
+  variants:
+    - BIO 和 BIOES 标注体系有什么区别？什么场景用 BIOES？
+    - 中文分词任务用哪套标注体系（BIES）？为什么对 OOV 鲁棒？
+    - CRF 的转移矩阵是怎么「学会」非法转移的？
+- id: nlp-006
+  difficulty: medium
+  type: single
+  question: 关于 BERT 微调与 LLM 做 NER 的对比（CLUENER 实测），哪项结论正确？
+  options:
+    - A. Qwen-plus Zero-shot 的 F1 最高，边界识别最强
+    - B. 数据充足时判别式 BERT 仍最优：BERT 微调(0.756) > LLM SFT(0.680) > LLM zero-shot(0.518)，CRF 相对 Linear 提升 <0.5%
+    - C. BERT+CRF 训练速度比 BERT+Linear 快
+    - D. LLM SFT 输出格式最不稳定，parse_fail 很高
+  answer: B
+  explanation: 四方案实测：BERT+Linear 0.756 / BERT+CRF 0.753（CRF 本例略降，但非法转移 264→244 确实变少）/ Qwen-plus zero-shot 0.518（边界识别弱）/ few-shot 0.484（示例质量影响，反而更低）/ Qwen SFT 0.680 且 parse_fail=0 格式完全可控。CRF 因维特比串行解码，训练每 epoch ~430s 是 Linear ~130s 的 3 倍——收益 <0.5% 但代价明显。
+  tags: [nlp, ner, crf, llm, discriminative-vs-generative]
+  week: week7-序列标注
+  project: none
+  stack: nlp
+  variants:
+    - 为什么 BERT 强基座时 CRF 收益有限？什么时候才值得加 CRF？
+    - few-shot 为什么可能比 zero-shot 还低？
+    - LLM 做 NER 的三种方式（Prompt / Function Calling / SFT）各有什么优劣？
+- id: nlp-007
+  difficulty: easy
+  type: boolean
+  question: 评估 NER 应使用实体级 F1（起止边界 + 类型完全匹配），Token 级准确率会虚高——实体仅占约 10% token 时，全部预测 O 也有约 90% 准确率。
+  answer: true
+  explanation: O 标签主导下 Token 准确率被稀释，边界错、漏识、类型错全被掩盖。实体级 F1 中一个实体正确 ⇔ 边界与类型都 Exact Match，用 seqeval 工具直接支持 BIO/BIOES。错误模式对症优化：边界截断加长实体样本、类型混淆加混淆样本、漏识(低 recall)扩充数据、误识(低 precision)加负样本。
+  tags: [nlp, ner, evaluation, seqeval]
+  week: week7-序列标注
+  project: none
+  stack: nlp
+  variants:
+    - 实体级 F1 中「一个实体正确」的判定标准是什么？
+    - 实体漏识多（低 recall）该怎么优化？误识多（低 precision）呢？
+    - 为什么不均衡的文本分类也要看 Macro-F1 而不是 Accuracy？
+- id: nlp-008
+  difficulty: hard
+  type: open
+  question: 对比判别式（BERT+CRF）与生成式（LLM）两种 NER 方案的优劣，说明数据充足与冷启动场景各自的选型，并描述生产环境推荐的最佳实践（混合方案）。
+  points:
+    - 判别式：精度高/推理快/格式可控（实测 0.75-0.76），但需要标注数据，新实体类型要重训
+    - 生成式：零标注可冷启动，但边界识别弱（zero-shot 0.52）、格式不稳；SFT 后格式可控（parse_fail=0）精度 0.68
+    - 选型：数据充足 → BERT+CRF；冷启动/低资源 → LLM
+    - 混合方案（推荐）：LLM 伪标注 → 人工审核 → 种子集训练 BERT → 上线 → 滚雪球扩充（高置信过滤 >0.9 + 人工审核，保留独立测试集）
+  answer:
+    - 两方案优劣对比（精度/成本/格式/标注依赖）
+    - 选型：数据充足 vs 冷启动
+    - 混合流水线（LLM 伪标注→审核→BERT 训练→滚雪球）描述
+  explanation: 核心认知：NER 本质是通用 span 分类器——实体=业务关心的文本 span，换业务只换标注数据，同一套 BERT+CRF 框架即可迁移。LLM 更适合做冷启动的数据来源而非唯一部署形态；远程监督（词典/知识库自动标注）可快速获数据但有漏标噪声风险。
+  tags: [nlp, ner, crf, llm, cold-start, distant-supervision]
+  week: week7-序列标注
+  project: none
+  stack: nlp
+  variants:
+    - 远程监督（Distant Supervision）怎么自动生成标注？有什么风险？
+    - 滚雪球迭代的具体流程是什么？为什么保留独立人工测试集？
+    - NER 为什么被称为「泛信息抽取框架」？医疗/金融实体类型怎么定义？
+- id: nlp-009
+  difficulty: easy
+  type: single
+  question: 哪种文本匹配架构可以把文档向量离线预计算，在线检索时只需 ANN 向量相似度查找？
+  options:
+    - A. CrossEncoder
+    - B. BiEncoder（双塔）
+    - C. 编辑距离
+    - D. BM25
+  answer: B
+  explanation: BiEncoder 让两段文本各自过共享权重 BERT 编码成向量（CLS/mean pooling），文档向量可离线预计算，在线只需向量相似度（ANN），O(1) 查找支持百万级召回。CrossEncoder 联合编码无法预计算，N 个候选 = N 次 BERT 推理。编辑距离/BM25 是传统词面方法，不涉及向量编码。
+  tags: [nlp, text-matching, biencoder, crossencoder]
+  week: week8-文本匹配
+  project: none
+  stack: nlp
+  variants:
+    - BiEncoder 训练常用哪些损失函数？SimCSE 怎么构造正例？
+    - 为什么 CrossEncoder 无法离线预计算向量？
+    - BiEncoder 的向量质量受什么影响（mean pooling vs CLS）？
+- id: nlp-010
+  difficulty: medium
+  type: single
+  question: 工业界标准的「两阶段检索」流水线是？
+  options:
+    - A. CrossEncoder 粗召回 → BiEncoder 精排
+    - B. BiEncoder 粗召回（百万级 ANN Top-K，K=50~200，<1ms）→ CrossEncoder 精排（K 个候选打分取 Top-N，50~200ms）
+    - C. BM25 精排 → 向量检索粗召回
+    - D. 只用 CrossEncoder 直接扫全库打分
+  answer: B
+  explanation: BiEncoder 快但精度中，负责在百万级文档库 ANN 粗召回 Top-K；CrossEncoder 准但慢，只对 K 个候选做 token 级交互精排取 Top-N，兼顾规模与精度。实测 AFQMC：CrossEncoder 0.8629 > BiEncoder cosine 0.8524，交互型精度优势成立，两阶段级联是工程最优解。
+  tags: [nlp, text-matching, retrieval, rerank, two-stage]
+  week: week8-文本匹配
+  project: none
+  stack: nlp
+  variants:
+    - 两阶段检索中 K 一般取多少？为什么 CrossEncoder 只能精排几十~几百条？
+    - 重排（Rerank）为什么能提升 RAG 效果？
+    - 跨语言/领域偏移场景，向量检索会退化，怎么缓解？
+- id: nlp-011
+  difficulty: easy
+  type: boolean
+  question: BiEncoder 与 CrossEncoder 是互补关系而非替代关系：BiEncoder 负责大规模召回，CrossEncoder 负责小候选集精排，工业界用两阶段组合兼得效率与精度。
+  answer: true
+  explanation: BiEncoder：编码独立/可预计算/O(1) 查找/百万级/精度中；CrossEncoder：联合编码/不可预计算/O(N) 推理/百千级/精度高。两者互补，两阶段级联是工程最优解；实测也印证 CrossEncoder 0.8629 高于 BiEncoder cosine 0.8524。单一架构都有明显短板，所以不存在「替代」。
+  tags: [nlp, text-matching, biencoder, crossencoder, two-stage]
+  week: week8-文本匹配
+  project: none
+  stack: nlp
+  variants:
+    - 什么场景只用 CrossEncoder 就够了（小候选集精确判断/精排）？
+    - CrossEncoder 延迟高，工程上怎么缓解（知识蒸馏/INT8 量化/候选集 <100）？
+    - 难负例挖掘（BM25 难负例 / in-batch negatives）为什么比模型选型更重要？
+- id: nlp-012
+  difficulty: hard
+  type: open
+  question: 对比 BiEncoder 和 CrossEncoder（原理、精度、效率、可预计算性），说明为什么工业界用两阶段组合，并指出训练阶段提升匹配效果的关键细节（损失函数/负样本/阈值）。
+  points:
+    - BiEncoder：共享 BERT 分别编码 → cosine 相似度；可离线预计算、ANN O(1) 召回、百万级；损失：CosineEmbeddingLoss / Triplet Loss / 对比学习（SimCSE 两次 Dropout 前向构造正例 + InfoNCE）
+    - CrossEncoder：CLS A [SEP] B 联合编码，所有层 Self-Attention 跨文本 token 级交互；精度最高但 N 候选 = N 次推理、不可预计算；适用精排
+    - 两阶段：BiEncoder 粗召回 Top-K（K=50~200）→ CrossEncoder 精排取 Top-N，兼得规模与精度（实测 CE 0.8629 > Bi cosine 0.8524 > triplet 0.8023）
+    - 训练细节：难负例 > 模型选型（BM25 难负例 / in-batch negatives）；样本不均衡用 Focal Loss/过采样；阈值必须按 val 网格搜索校准（cosine 0.51 vs triplet 0.81）
+  answer:
+    - 两者原理与效率对比（编码方式/可预计算/复杂度）
+    - 两阶段组合的理由
+    - 至少两个训练/部署细节（损失函数、难负例、阈值校准、蒸馏）
+  explanation: 核心权衡是「效率 vs 精度」；AFQMC 实测 cosine 损失稳定优于 triplet；LLM zero-shot 精确率高但召回仅 0.48（太抠字眼），LLM 定位是冷启动数据生成老师（蒸馏小模型快 100x）而非直接部署对象。
+  tags: [nlp, text-matching, biencoder, crossencoder, two-stage, triplet-loss, distillation]
+  week: week8-文本匹配
+  project: none
+  stack: nlp
+  variants:
+    - 如何用 LLM 生成 (query, 正例, 负例) 三元组并蒸馏小模型？
+    - AFQMC 实测中为什么 BiEncoder Triplet 弱于 Cosine？margin 怎么调？
+    - 部署端 ANN 精度损失（nprobe/ef 调参）和向量库增量更新怎么处理？

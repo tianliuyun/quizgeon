@@ -42,6 +42,18 @@ textarea { width:100%; min-height:120px; resize:vertical; margin-top:10px; font-
 .wrong-item { background:#0f172a; border-radius:8px; padding:12px; margin:8px 0; font-size:14px; }
 .wrong-item .q { margin-bottom:6px; }
 .wrong-item .a { color:#94a3b8; font-size:13px; }
+.card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(38px,1fr)); gap:6px; }
+.card-cell { background:#0f172a; border:1px solid #334155; border-radius:6px; padding:7px 0; text-align:center; cursor:pointer; font-size:13px; position:relative; font-weight:600; }
+.card-cell:hover { border-color:var(--accent); }
+.card-cell.current { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.card-cell.done-correct { background:#14532d; border-color:var(--ok); }
+.card-cell.done-wrong { background:#7f1d1d; border-color:var(--bad); }
+.card-cell.skipped { background:#422006; border-color:#a16207; }
+.card-cell .type-mark { font-size:9px; position:absolute; top:0; right:3px; color:#94a3b8; font-weight:400; }
+.tag-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; margin-right:6px; margin-bottom:4px; }
+.tag-week { background:#1e3a8a; color:#bfdbfe; }
+.tag-project { background:#14532d; color:#bbf7d0; }
+.tag-stack { background:#581c87; color:#e9d5ff; }
 #report { display:none; }
 .hidden { display:none !important; }
 </style>
@@ -88,7 +100,9 @@ textarea { width:100%; min-height:120px; resize:vertical; margin-top:10px; font-
       <span id="q-progress"></span>
       <span class="timer" id="timer"></span>
     </div>
+    <div id="answer-card" style="margin-bottom:14px;"></div>
     <span class="q-type" id="q-type"></span>
+    <div id="q-tags" style="margin:8px 0;"></div>
     <div class="q-text" id="q-text"></div>
     <div id="q-options"></div>
     <div id="q-open" class="hidden">
@@ -112,6 +126,9 @@ textarea { width:100%; min-height:120px; resize:vertical; margin-top:10px; font-
       <div class="metric"><div class="num" id="r-score"></div><div class="lbl">综合分</div></div>
     </div>
     <div><strong>薄弱知识点：</strong><span id="r-weak"></span></div>
+    <div style="margin-top:10px;"><strong>按周聚合：</strong><span id="r-weak-week"></span></div>
+    <div style="margin-top:10px;"><strong>按项目聚合：</strong><span id="r-weak-project"></span></div>
+    <div style="margin-top:10px;"><strong>按技术栈聚合：</strong><span id="r-weak-stack"></span></div>
     <div style="margin-top:14px;"><strong>错题回顾：</strong></div>
     <div id="r-wrong"></div>
     <div class="row" style="margin-top:16px;">

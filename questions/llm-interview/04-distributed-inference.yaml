@@ -14,6 +14,9 @@
   tags:
   - distributed
   - data-parallel
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - 数据并行
   - AllReduce
@@ -35,6 +38,9 @@
   tags:
   - distributed
   - tensor-parallel
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - 张量并行
   - Megatron-LM
@@ -58,6 +64,9 @@
   tags:
   - distributed
   - pipeline-parallel
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - 流水线并行
   - GPipe
@@ -80,6 +89,9 @@
   - distributed
   - zero
   - deepspeed
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - ZeRO
   - DeepSpeed
@@ -103,6 +115,9 @@
   tags:
   - distributed
   - 3d-parallel
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - 3D 并行
 - id: dist-006
@@ -124,6 +139,9 @@
   - inference
   - vllm
   - paged-attention
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - vLLM
   - PagedAttention
@@ -147,6 +165,9 @@
   tags:
   - inference
   - quantization
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - 模型量化
 - id: dist-008
@@ -170,6 +191,9 @@
   - inference
   - flash-attention
   - optimization
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - FlashAttention
 - id: dist-009
@@ -193,6 +217,9 @@
   - inference
   - batch
   - latency
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - 推理基础
 - id: dist-010
@@ -214,6 +241,9 @@
   - distributed
   - allreduce
   - allgather
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   related:
   - 集合通信
   - NCCL
@@ -242,4 +272,7 @@
   - distributed
   - 3d-parallel
   - boss
+  week: week16-大模型结构演进
+  project: none
+  stack: inference
   min_keywords: 4

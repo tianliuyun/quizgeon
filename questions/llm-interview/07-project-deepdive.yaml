@@ -1,0 +1,259 @@
+# 简历项目深挖题库（考核体系 V1.1）
+# 来源：v16 简历三项目 + 项目深挖复习计划 L1/L2/L3 追问链
+# 数字口径与简历一致，可扛 3 层追问
+- id: proj-001
+  difficulty: hard
+  type: open
+  question: 请完整描述 ReAct 范式的工作循环，并说明它为什么比"一次性回答"更有效。
+  points:
+    - ReAct = Reasoning + Acting，Thought-Action-Observation 循环
+    - 走一步看一步，根据 Observation 决定下一步 Action
+    - 每一步能拿到外部信息（工具/知识库），不凭空编造
+    - Thought 全程可见，可审计、可 debug
+    - 终止条件：达到最大步数/得出答案/主动放弃
+  answer:
+    - Thought-Action-Observation 循环
+    - 外部信息 + 可审计
+  explanation: ReAct 核心是推理与行动交替，像人一样边查边想；外部工具补信息、过程可审计是两大价值。要讲清循环和终止条件。
+  tags: [react, agent]
+  week: week12-AGENT
+  project: ticket-diagnose-agent
+  stack: agent
+  variants:
+    - ReAct 循环怎么终止？死循环了怎么办？
+    - 如果工具调用失败了，Agent 应该怎么恢复？
+- id: proj-002
+  difficulty: hard
+  type: open
+  question: 你的工单智能诊断 Agent 为什么设计成「BERT 分类初筛 + Agent 并行诊断」两级结构？直接全用 LLM 不行吗？
+  points:
+    - BERT 分类器快、成本低，做初筛/路由（产品大类/问题类型/优先级）
+    - 低置信样本（13.3%）自动转人工兜底，保证安全可控
+    - Agent 只处理需要复杂推理的工单，避免每个工单都走 LLM（成本）
+    - 复用已有工单分类器与派送引擎，平滑接入现有流程
+    - 保留技能匹配、负载均衡机制
+  answer:
+    - 快慢结合：BERT 粗筛 + Agent 精诊
+    - 低置信转人工兜底
+  explanation: 两级结构是成本与质量的平衡：简单工单 BERT 秒级分流，复杂工单 Agent 深度诊断，低置信人工兜底。全用 LLM 成本高且慢，全用分类器能力不足。
+  tags: [agent, architecture]
+  week: week12-AGENT
+  project: ticket-diagnose-agent
+  stack: agent
+  variants:
+    - 低置信转人工的比例怎么控制？
+    - 如果工单量暴增，这个架构的瓶颈在哪？
+- id: proj-003
+  difficulty: medium
+  type: single
+  question: 工单 Agent 中 LangGraph 状态图相比自研 ReAct 实现的核心优势是？
+  options:
+    - A. 推理能力更强
+    - B. 显式的状态编排（节点/边/状态流转），复杂流程可控可观测
+    - C. 不需要大模型
+    - D. 自动生成评测集
+  answer: B
+  explanation: LangGraph 用 StateGraph 显式定义节点和状态流转（初筛→路由→并行派发→分派→结论五节点），流程可控、可回滚、可观测；自研 ReAct 灵活但状态管理弱。项目里做了 A/B 对比验证。
+  tags: [langgraph, agent]
+  week: week12-AGENT
+  project: ticket-diagnose-agent
+  stack: agent
+  variants:
+    - LangGraph 的状态（state）是怎么在节点间传递的？
+    - 五节点流程里并行派发节点做了什么？
+- id: proj-004
+  difficulty: medium
+  type: boolean
+  question: 工单 Agent 的并行诊断用 ThreadPoolExecutor 派发多个 Worker 并发查询故障知识库，实测较串行加速 1.55-2.38 倍。
+  answer: true
+  explanation: 简历实测数字。多 Worker 并行查询知识库替代人工串行排查；ThreadPoolExecutor 对 I/O 密集型任务足够，加速比受知识库查询耗时占比影响。
+  tags: [parallel, agent]
+  week: week12-AGENT
+  project: ticket-diagnose-agent
+  stack: agent
+  variants:
+    - 为什么用线程池而不是 asyncio？
+    - 并行加速的瓶颈可能在哪？
+- id: proj-005
+  difficulty: hard
+  type: open
+  question: 你的评测集分类准确率 100%，面试官会质疑过拟合。你怎么回应？
+  points:
+    - 300 条评测集是典型故障工单构建，聚焦覆盖安全/大云场景
+    - 准确率是评测集内指标，还有低置信 13.3% 转人工兜底（生产安全）
+    - 另用真实 LLM 端到端验证 + 离线 Mock 双后端可插拔
+    - 承认局限：真实工单分布更复杂，靠人工兜底 + 持续迭代评测集
+    - 不硬撑 100% 是真实分布，讲清评测口径
+  answer:
+    - 评测集口径 + 人工兜底 + 端到端验证
+  explanation: 诚实 + 口径清晰：评测集内 100% 是设计目标（典型样本），生产靠低置信转人工兜底，且做了真实 LLM 端到端验证。这是项目里最容易被挑战的点，要主动讲口径。
+  tags: [eval, agent]
+  week: week12-AGENT
+  project: ticket-diagnose-agent
+  stack: agent
+  variants:
+    - 评测集怎么构建才不容易过拟合？
+    - 低置信判定用什么方法？
+- id: proj-006
+  difficulty: hard
+  type: open
+  question: 描述你的 RAG 助手三级高精度召回管线（从文档到答案），并说明每一级解决什么问题。
+  points:
+    - 语义分块 + 父子块策略：小块检索准、父块上下文完整
+    - 粗排：BGE 向量（FAISS/Milvus/ES 三后端可切换）+ BM25 稀疏 + RRF 融合
+    - 精排：CrossEncoder 重排，问题+文档交互打分
+    - 评测：100 条 QA，Hit@1 55%（固定分块纯向量）→ 81%（语义分块+混合）→ 91%（+重排），Hit@5 99%
+    - 幻觉控制：Prompt 约束 + 溯源引用 + 低置信拒答
+  answer:
+    - 分块 → 粗排（向量+BM25+RRF）→ 精排（CE）→ 生成
+    - 每级提升来源
+  explanation: 三级管线是 RAG 项目核心，数字要讲清每级提升来源：分块策略升级 + 混合检索 + 重排各自贡献。Hit@1 91% 是简历亮点。
+  tags: [rag, pipeline]
+  week: week10-检索增强生成
+  project: delivery-rag
+  stack: rag
+  variants:
+    - 为什么先向量粗排再 CE 精排，不直接用 CE？
+    - 父子块策略的父块和子块分别怎么用？
+- id: proj-007
+  difficulty: medium
+  type: single
+  question: RAG 中引入 CrossEncoder 重排为什么能提升效果？
+  options:
+    - A. CrossEncoder 比向量模型快
+    - B. 问题和文档一起输入做深度交互（Cross-Attention），比双塔向量相似度更准
+    - C. CrossEncoder 不需要训练
+    - D. 它直接生成答案
+  answer: B
+  explanation: 向量检索是双塔（各自编码后算相似度），交互少；CrossEncoder 将问题和文档拼接一起输入做交互打分，精度高但慢，所以只对粗排 Top50 精排出 Top5。
+  tags: [rag, reranker]
+  week: week10-检索增强生成
+  project: delivery-rag
+  stack: rag
+  variants:
+    - BiEncoder 和 CrossEncoder 的本质区别？
+    - 重排阶段通常对多少条做精排？
+- id: proj-008
+  difficulty: hard
+  type: open
+  question: 你的 RAG 项目怎么控制幻觉？如果面试官问"Faithfulness 0.967 怎么来的"，你怎么答？
+  points:
+    - 幻觉控制三件套：Prompt 约束（只能基于上下文）+ 答案溯源引用 + 低置信拒答
+    - 评测：RAGAS 框架，Faithfulness 衡量答案能否从上下文找到依据
+    - 以 DeepSeek-as-Judge 实测 30 题抽样 Faithfulness 0.967
+    - 配合 Phoenix/OpenTelemetry 可观测持续对齐
+    - 承认抽样规模，讲清评测口径
+  answer:
+    - 三层控制 + RAGAS 评测方法
+  explanation: 幻觉控制是 RAG 核心卖点。0.967 是 30 题抽样的实测值，要讲清评测方法和口径（DeepSeek-as-Judge + RAGAS）。
+  tags: [rag, hallucination]
+  week: week10-检索增强生成
+  project: delivery-rag
+  stack: rag
+  variants:
+    - 低置信拒答的阈值怎么定？拒答后给用户什么？
+    - 溯源引用在答案里怎么呈现？
+- id: proj-009
+  difficulty: hard
+  type: open
+  question: 面试官质疑"100 条评测集太少了，91% 不可信"，你怎么回应？
+  points:
+    - 承认评测集规模有限，但数字是实测可复现（一键跑评测脚本）
+    - 91% 是 Hit@1，Hit@5 达 99%，说明答案基本在 Top5 内
+    - 领域 QA 聚焦硬知识（产品手册/FAQ/故障记录），难度不低
+    - 用 Faithfulness 0.967 佐证生成质量，多指标互相印证
+    - 说明后续扩展方向：扩大评测集 + 真实用户反馈回流
+  answer:
+    - 可复现 + 多指标互证 + 承认局限
+  explanation: 诚实承认 + 用可复现性和多指标支撑。简历数字必须能说清来源，评测脚本可一键复现是底气。
+  tags: [rag, eval]
+  week: week10-检索增强生成
+  project: delivery-rag
+  stack: rag
+  variants:
+    - 评测集怎么构建才更可信？
+    - Hit@1 和 Hit@5 各说明什么问题？
+- id: proj-010
+  difficulty: medium
+  type: single
+  question: 你的 RAG 用 FAISS / Milvus / Elasticsearch 三后端可切换。它们各自的典型适用场景是？
+  options:
+    - A. FAISS 轻量单机 / Milvus 分布式大规模向量 / ES 文本+向量混合检索
+    - B. 三者完全等价可互换
+    - C. Milvus 只适合文本检索
+    - D. ES 不支持向量
+  answer: A
+  explanation: FAISS 轻量易集成适合单机；Milvus 面向大规模向量分布式场景；ES 原生文本检索强，也支持向量（混合检索友好）。项目通过统一接口抽象实现可切换。
+  tags: [rag, vector-db]
+  week: week10-检索增强生成
+  project: delivery-rag
+  stack: rag
+  variants:
+    - 三后端切换的接口抽象怎么设计？
+    - 什么场景选 ES 而不是 Milvus？
+- id: proj-011
+  difficulty: medium
+  type: boolean
+  question: RAG 项目的 Docker 容器化 + FastAPI 微服务私有化部署，核心诉求是数据不出域、满足企业信息安全合规。
+  answer: true
+  explanation: 面向交付场景，客户数据不能出域，私有化部署是合规刚需；Docker 容器化 + FastAPI 微服务是落地手段。
+  tags: [rag, deployment]
+  week: week10-检索增强生成
+  project: delivery-rag
+  stack: rag
+  variants:
+    - 私有化部署相比 API 调用的优缺点？
+    - FastAPI 服务有哪些接口？
+- id: proj-012
+  difficulty: hard
+  type: open
+  question: 为什么你的 LoRA 微调选 0.5B 小模型？面试官问"小模型能力够吗"怎么答？
+  points:
+    - 场景定位：交付领域专用小模型，面向低资源/边缘/私有化部署
+    - 成本：QLoRA 4bit 在 2GB 显存 GPU 实测跑通（峰值 1140MB）
+    - 部署：INT4 量化后加载峰值 535MB、推理 547MB，单卡可部署
+    - 效果：领域硬知识问答准确率较 base 显著提升（+13.3pp）
+    - 取舍：通用能力弱于大模型，但领域专用 + 数据不出域是核心价值
+  answer:
+    - 场景定位 + 成本部署优势 + 领域效果
+  explanation: 0.5B 不是"能力不够"，是"面向边缘私有化场景的最优解"。要主动讲清场景定位和取舍，数字（2GB/1140MB/535MB/547MB/+13.3pp）要能脱口而出。
+  tags: [lora, deployment]
+  week: week9-大模型应用补充
+  project: delivery-lora
+  stack: pretrain-sft
+  variants:
+    - 小模型 + LoRA 和大模型 API 怎么选型？
+    - 为什么选 Qwen2-0.5B 而不是更大的？
+- id: proj-013
+  difficulty: hard
+  type: open
+  question: LoRA 为什么能大幅降低显存和训练成本？请从原理讲起。
+  points:
+    - 冻结原始权重 W，只训练低秩矩阵 A×B（近似 ΔW）
+    - 可训练参数仅 0.22%（r=8, alpha=16, 全层注入 q/k/v/o）
+    - 不需要保存大模型全部梯度与优化器状态
+    - QLoRA 4bit 量化基座进一步压缩显存（NF4 量化）
+    - 效果：领域适配接近全量微调
+  answer:
+    - 低秩分解 + 冻结基座 + 只训少量参数
+  explanation: LoRA 原理是"权重更新低秩化"：A×B 参数量远小于 W。r 控制秩，alpha 缩放，0.22% 参数是简历数字要能讲清来源。
+  tags: [lora, finetune]
+  week: week9-大模型应用补充
+  project: delivery-lora
+  stack: pretrain-sft
+  variants:
+    - r 和 alpha 怎么选？r 太大/太小会怎样？
+    - 序列打包（packing）解决什么问题？
+- id: proj-014
+  difficulty: medium
+  type: boolean
+  question: 你的 LoRA 项目用独立黄金评测集（与训练集分开）以 LLM-as-a-Judge 评测，领域硬知识问答准确率较 base 模型显著提升。
+  answer: true
+  explanation: 独立黄金评测集防止训练集污染评测；LLM-as-a-Judge 自动化评分。提升口径 +13.3pp（base 3.3% → QLoRA 16.7%，30 条黄金评测），简历里写"显著提升"、面试讲具体数字。
+  tags: [lora, eval]
+  week: week9-大模型应用补充
+  project: delivery-lora
+  stack: pretrain-sft
+  variants:
+    - 为什么用 LLM-as-a-Judge 而不是人工评测？
+    - 训练集和评测集为什么要分开？
