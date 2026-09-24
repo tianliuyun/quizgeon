@@ -305,6 +305,14 @@
     const rep = $('report');
     rep.style.display = 'block';
 
+    // 超时/提前结束：未答的题补齐为「未答」（计入总数，防正确率虚高）
+    if (state.results.length < state.questions.length) {
+      for (let i = state.results.length; i < state.questions.length; i++) {
+        const q = state.questions[i];
+        state.results.push({ q, ok: 0, pointsScore: 0, pointsMax: q.points ? q.points.length : 0, userAnswer: '(未答)', weakTags: q.tags || [], judged: false });
+      }
+    }
+
     const total = state.results.length;
     const objQs = state.results.filter((r) => r.q.type === 'single' || r.q.type === 'boolean');
     const openQs = state.results.filter((r) => r.q.type === 'open');
@@ -368,6 +376,8 @@
 
     // 存历史（分数曲线数据）
     saveHistory({ ts: Date.now(), bank: state.bankId, total, correct: total - wrong.length, comp: Math.round(comp * 100) });
+    // V1.2 历史成绩曲线
+    renderHistoryChart();
   }
 
   function saveHistory(rec) {
@@ -377,6 +387,50 @@
       if (hist.length > 100) hist.splice(0, hist.length - 100);
       localStorage.setItem(STORE_KEY, JSON.stringify(hist));
     } catch (e) { /* ignore */ }
+  }
+
+  // ---------- V1.2 历史成绩曲线（SVG 折线，零依赖） ----------
+  function renderHistoryChart() {
+    const box = $('history-chart');
+    if (!box) return;
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) {}
+    // 只取当前题库（默认大模型面试）的记录，最近 20 次
+    hist = hist.filter((r) => !state.bankId || !r.bank || r.bank === state.bankId).slice(-20);
+    if (hist.length < 2) {
+      box.innerHTML = '<div class="sub">完成 2 次以上考核后显示趋势曲线</div>';
+      return;
+    }
+    const W = 680, H = 220, PAD = { l: 38, r: 12, t: 16, b: 26 };
+    const iw = W - PAD.l - PAD.r, ih = H - PAD.t - PAD.b;
+    const maxV = Math.max(100, ...hist.map((r) => r.comp || 0));
+    const minV = 0;
+    const x = (i) => PAD.l + (hist.length === 1 ? iw / 2 : (i / (hist.length - 1)) * iw);
+    const y = (v) => PAD.t + ih - ((v - minV) / (maxV - minV)) * ih;
+    let pts = hist.map((r, i) => `${x(i).toFixed(1)},${y(r.comp || 0).toFixed(1)}`);
+    // 网格线（0/25/50/75/100）
+    let grid = '';
+    [0, 25, 50, 75, 100].forEach((v) => {
+      if (v > maxV) return;
+      const yy = y(v).toFixed(1);
+      grid += `<line x1="${PAD.l}" y1="${yy}" x2="${W - PAD.r}" y2="${yy}" stroke="#334155" stroke-width="1" stroke-dasharray="3,4"/>`;
+      grid += `<text x="${PAD.l - 6}" y="${(parseFloat(yy) + 4).toFixed(1)}" fill="#94a3b8" font-size="10" text-anchor="end">${v}</text>`;
+    });
+    // 数据点 + 标签
+    let dots = '', labels = '';
+    hist.forEach((r, i) => {
+      const cxx = x(i).toFixed(1), cyy = y(r.comp || 0).toFixed(1);
+      dots += `<circle cx="${cxx}" cy="${cyy}" r="3.5" fill="#38bdf8"><title>${new Date(r.ts).toLocaleString()} 综合分 ${r.comp}（${r.correct}/${r.total} 对）</title></circle>`;
+      const d = new Date(r.ts);
+      labels += `<text x="${cxx}" y="${H - 8}" fill="#94a3b8" font-size="9" text-anchor="middle">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}</text>`;
+    });
+    const last = hist[hist.length - 1];
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:680px;background:#0f172a;border-radius:10px;">
+      ${grid}
+      <polyline points="${pts.join(' ')}" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}${labels}
+      <text x="${PAD.l}" y="${PAD.t - 4}" fill="#e2e8f0" font-size="11">综合分趋势 · 最近一次 ${last.comp}（${last.correct}/${last.total}）</text>
+    </svg>`;
   }
 
   // ---------- 事件绑定 ----------
