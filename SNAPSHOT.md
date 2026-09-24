@@ -1,19 +1,18 @@
 # SNAPSHOT.md — Quizgeon（题牢）进度快照
 
-> 更新：2026-09-24（考核体系 V1 上线）
+> 更新：2026-09-24（考核体系 V1.1 完成）
 
 ## 当前阶段
 
-**考核体系 V1 已完成**：在游戏本体之外新增独立考核模式（exam.html），打通"题库→答题→LLM 判分→报告"最小闭环。V1.1（题库补全+间隔复测）和 V1.2（分数曲线+模拟面试）迭代中。
+**考核体系 V1.1 已完成**：答题卡 + 三级标签 + 73 题题库（覆盖 11 周 + 3 项目 + 7 技术栈）。V1.2（分数曲线+模拟面试+间隔复测）待做。
 
-## 本轮完成（2026-09-24）
+## 本轮完成（2026-09-24 V1.1）
 
-- ✅ **题库扩展**：llm-interview 从 44 题 → 47 题（transformer 11 / pretrain-sft 11 / rag-agent 14 / distributed 11），题型 single 29 + boolean 8 + open 10；open 题带 points 得分点 + variants 变式（36 个变式）
-- ✅ **LLM 判分服务**：`judge-server/judge-server.py`（FastAPI 8787），调火山方舟 deepseek-v4-flash（~/.hermes/.env 的 ARK_API_KEY），按得分点逐条判分，实测好答案 4/4、模糊答案 0/4（严格）
-- ✅ **考核模式**：`exam.html` + `exam.js`——题库/题数/限时选择、随机抽题、变式防背题、single/boolean 即时判分、open 题 LLM 判分、考核报告（正确率/得分点/薄弱点 tags/错题回顾）、localStorage 存历史
-- ✅ **build 脚本**：支持 boolean 题型、判断题无需 options、跳过 `_` 开头归档目录
-- ✅ **入口**：index.html 菜单新增「📝 考核模式」按钮
-- ✅ 旧 03-rag-agent-inference.yaml 归档到 `questions/_archive/`（与新 rag-agent 题库 ID 冲突）
+- ✅ **答题卡**：题号网格 + 状态色（绿对/红错/灰跳过）+ 题型角标 + 点击自由跳转 + 当前题高亮
+- ✅ **三级标签**：每题 week（课程周）/ project（简历项目）/ stack（技术栈）独立字段，题目顶部徽章展示，报告按三类分别聚合薄弱点
+- ✅ **题库 73 题**：新增 05-nlp-basics（week6-8 NLP 基础 12 题）+ 07-project-deepdive（三项目 L1/L2/L3 追问 14 题，数字口径与简历一致）；现有 47 题补齐三级标签
+- ✅ **默认题库**改为大模型面试；格式规范更新（week/project/stack 字段）
+- ✅ 已 push GitHub（6577f96..b440953）
 
 ## 项目状态清单（全量）
 
